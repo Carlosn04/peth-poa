@@ -83,9 +83,13 @@ export default class BootstrapManager {
             // '--ipcdisable',
             '--port', port.toString(),
             '--authrpc.port', port.toString(),
-            '--nat', `extip:${externalIp}`,
-            '--netrestrict', subnet,
+            // '--nat', `extip:${externalIp}`,
+            // '--netrestrict', subnet,
             '--verbosity', '3',
+            //
+            '--http', '--http.addr', '0.0.0.0', '--http.port', '8545', '--http.corsdomain', '"*"',
+            '--discovery.v4',
+            '--discovery.v5' // needed for enr in localhost
             // Add additional flags as needed
         ];
 

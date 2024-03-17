@@ -5,18 +5,21 @@ import { IStorageMiddleware } from '../../interfaces/IStorageMiddleware';
 import SignerManager from './SignerManager';
 import NetworkManager from '../networks/NetworkManager';
 import BootstrapManager from './BootstrapManager';
+import MemberManager from './MemberManager';
 
 class NodeManager {
     private storageMiddleware: IStorageMiddleware;
     private signerManager: SignerManager;
     private networkManager: NetworkManager
     private bootstrapManager: BootstrapManager;
+    private memberManager: MemberManager
 
     constructor(storageMiddleware: IStorageMiddleware) {
         this.storageMiddleware = storageMiddleware;
         this.signerManager = new SignerManager(this.storageMiddleware)
         this.networkManager = new NetworkManager(this.storageMiddleware)
         this.bootstrapManager = new BootstrapManager(this.storageMiddleware)
+        this.memberManager = new MemberManager(this.storageMiddleware)
     }
 
     public async createNode(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', password: string): Promise<string> {
@@ -108,6 +111,9 @@ class NodeManager {
             switch (nodeType) {
                 case 'signer':
                     await this.signerManager.startSignerNode(chainId, address, port, enr);
+                    break;
+                case 'member':
+                    await this.memberManager.startMemberNode(chainId, address, port, enr);
                     break;
                 case 'bootstrap':
                     // Ensure externalIp and subnet are provided for bootstrap nodes

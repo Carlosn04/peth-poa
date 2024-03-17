@@ -53,6 +53,7 @@ export default class SignerManager {
     }
 
     const networkNodeDir = `${config.localStoragePath}/networks/${chainId}/signer/${address}`;
+    const ipcPath = `${config.localStoragePath}/geth.ipc`
     
     // Construct the Geth command arguments including the --bootnodes flag with the ENR
     const gethCommandArgs = [
@@ -65,7 +66,10 @@ export default class SignerManager {
       '--password', `${networkNodeDir}/password.txt`,
       '--mine',
       '--miner.etherbase', address,
-      '--ipcdisable'
+      '--ipcpath', ipcPath,
+      '--discovery.v4',
+      '--discovery.v5'
+      // '--ipcdisable'
     ];
   
     try {
