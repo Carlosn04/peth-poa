@@ -34,7 +34,7 @@ class GenesisCreator {
     return prefix + middle + suffix;
   }
 
-  public async generateGenesisFile(): Promise<void> {
+  public async generateGenesisFile(): Promise<boolean> {
     // Generate genesis data
     const genesisData = {
       config: {
@@ -70,18 +70,20 @@ class GenesisCreator {
     await fs.writeJson(genesisFilePath, genesisData, { spaces: 2 });
     console.log(`Genesis file created at ${genesisFilePath}`);
 
-    // Update network-config.json
-    const networkConfigPath = path.join(networkDirectory, 'network-config.json');
-    const networkConfig = {
-      genesisPath: 'genesis.json', // Relative path within the network directory
-      nodes: {}, // Placeholder for node paths
-      deployed: false,
-      running: false,
-    };
+    return true
 
-    // Write or update network-config.json
-    await fs.writeJson(networkConfigPath, networkConfig, { spaces: 2 });
-    console.log(`Network configuration updated: ${networkConfigPath}`);
+    // Update network-config.json
+    // const networkConfigPath = path.join(networkDirectory, 'network-config.json');
+    // const networkConfig = {
+    //   genesisPath: 'genesis.json', // Relative path within the network directory
+    //   nodes: {}, // Placeholder for node paths
+    //   deployed: false,
+    //   running: false,
+    // };
+
+    // // Write or update network-config.json
+    // await fs.writeJson(networkConfigPath, networkConfig, { spaces: 2 });
+    // console.log(`Network configuration updated: ${networkConfigPath}`);
   }
 }
 

@@ -4,7 +4,7 @@ import AccountManager from './management/accounts/AccountManager';
 import SignerManager from './management/nodes/SignerManager';
 import BootstrapManager from './management/nodes/BootstrapManager';
 import NodeManager from './management/nodes/NodeManager';
-import NetworkConfigManager from './management/networks/NetworkConfigManager';
+import NetworkManager from './management/networks/NetworkManager';
 import DockerDeployer from './deployment/DockerDeployer';
 
 const storageMiddleware = new FileSystemStorageMiddleware();
@@ -33,6 +33,7 @@ export const pethPoa = {
   nodes: {
     createSignerAccount: signerManager.createSignerAccount.bind(signerManager),
     createBootstrapAccount: bootstrapManager.createBootstrapAccount.bind(bootstrapManager),
+    createNode: nodeManager.createNode.bind(nodeManager),
     initNode: nodeManager.initNode.bind(nodeManager),
     startNode: nodeManager.startNode.bind(nodeManager),
     startBootstrapNode: bootstrapManager.startBootstrapNode.bind(bootstrapManager)
@@ -41,7 +42,7 @@ export const pethPoa = {
     createGenesis: createGenesis,
   },
   network: {
-    getNetworkConfigManager: (chainId: string) => new NetworkConfigManager(chainId)
+    // getNetworkConfigManager: (chainId: string) => new NetworkManager()
   },
   docker: {
     deployNetwork: async (chainId: number) => {

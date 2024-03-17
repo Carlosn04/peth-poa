@@ -18,23 +18,16 @@ export default class PortManager {
 
     constructor(storageMiddleware: IStorageMiddleware) {
         this.storageMiddleware = storageMiddleware;
-        this.filePath = `${config.portsBasePath}/network_ports.json`;
-        this.init();
+        this.filePath = `${config.portsBasePath}/network-ports.json`;
+        this.initialize();
     }
 
-    public async ensureInitialized(): Promise<void> {
-        if (!this.initialized) {
-            await this.init();
-            this.initialized = true; // Ensure init only runs once
-        }
-    }
-
-    private async init(): Promise<void> {
+    private async initialize(): Promise<void> {
         try {
             const configData = await this.storageMiddleware.readFile(this.filePath);
             this.networkPortConfig = JSON.parse(configData);
         } catch (error) {
-            console.log('Port assignment file does not exist, creating a new one.');
+            console.log('Network port assignment file does not exist, creating...');
             await this.initializePorts();
         }
     }
@@ -44,12 +37,11 @@ export default class PortManager {
             const networkId = `network_${i}`;
             this.networkPortConfig.ports[networkId] = Array.from({ length: maxNodesPerNetwork }, (_, j) => startingPort + i * 100 + j);
         }
-        // Initialize chainIdMapping or perform necessary setup here
         await this.savePortAssignments();
     }
 
     public async allocatePort(chainId: string): Promise<number | null | undefined> {
-        await this.init();
+        await this.initialize();
         // Try to find an existing networkId mapped to the given chainId
         let availableNetworkId: string | undefined = this.networkPortConfig.chainIdMapping[chainId];
     

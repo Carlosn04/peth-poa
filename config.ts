@@ -10,6 +10,7 @@ interface Config {
     bootstrapPath: string;
     genesisBasePath: string;
     portsBasePath: string;
+    networksBasePath: string;
 }
 
 export const config: Config = {
@@ -22,6 +23,7 @@ export const config: Config = {
     // bootnodePath: '../local-storage/nodes/bootnode',
     bootstrapPath: '../local-storage/nodes/bootstrap',
     genesisBasePath: '../local-storage/genesis',
-    portsBasePath: '../local-storage/networks'
+    portsBasePath: '../local-storage/networks',
+    networksBasePath: '../local-storage/networks'
     // Add other global configuration parameters here
 };

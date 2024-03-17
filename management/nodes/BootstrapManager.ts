@@ -82,6 +82,7 @@ export default class BootstrapManager {
             '--ipcpath', ipcPath, // Example of a shorter path for IPC
             // '--ipcdisable',
             '--port', port.toString(),
+            '--authrpc.port', port.toString(),
             '--nat', `extip:${externalIp}`,
             '--netrestrict', subnet,
             '--verbosity', '3',

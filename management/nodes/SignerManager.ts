@@ -41,13 +41,13 @@ export default class SignerManager {
     return match[1];
   }
 
-  public async startSignerNode(chainId: number, address: string, portParam: number | null | undefined, enr: string) {
+  public async startSignerNode(chainId: number, address: string, port: number | null | undefined, enr: string) {
     if (!enr) {
       console.error("ENR not available. Cannot start signer node.");
       return;
     }
 
-    if (!portParam) {
+    if (!port) {
       console.error("Port not provided! Cannot start signer node.");
       return;
     }
@@ -57,7 +57,8 @@ export default class SignerManager {
     // Construct the Geth command arguments including the --bootnodes flag with the ENR
     const gethCommandArgs = [
       '--datadir', networkNodeDir,
-      '--port', portParam.toString(),
+      '--port', port.toString(),
+      '--authrpc.port', port.toString(), // Geth connection
       '--bootnodes', enr,
       '--networkid', chainId.toString(),
       '--unlock', address,

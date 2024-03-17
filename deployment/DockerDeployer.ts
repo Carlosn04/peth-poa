@@ -36,11 +36,6 @@ services:
       - --unlock=${signer.address}
       - --password=/root/.ethereum/password.txt
       - --mine
-      - --http
-      - --http.addr=0.0.0.0
-      - --http.api=eth,net,web3,personal
-      - --http.corsdomain=*
-      - --http.vhosts=*
     volumes:
       - ${path.resolve(signer.nodePath)}:/root/.ethereum
     ports:
