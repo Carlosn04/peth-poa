@@ -6,13 +6,15 @@ import SignerManager from './SignerManager';
 import NetworkManager from '../networks/NetworkManager';
 import BootstrapManager from './BootstrapManager';
 import MemberManager from './MemberManager';
+import RpcManager from './RpcManager';
 
 class NodeManager {
     private storageMiddleware: IStorageMiddleware;
     private signerManager: SignerManager;
     private networkManager: NetworkManager
     private bootstrapManager: BootstrapManager;
-    private memberManager: MemberManager
+    private memberManager: MemberManager;
+    private rpcManager: RpcManager;
 
     constructor(storageMiddleware: IStorageMiddleware) {
         this.storageMiddleware = storageMiddleware;
@@ -20,10 +22,25 @@ class NodeManager {
         this.networkManager = new NetworkManager(this.storageMiddleware)
         this.bootstrapManager = new BootstrapManager(this.storageMiddleware)
         this.memberManager = new MemberManager(this.storageMiddleware)
+        this.rpcManager = new RpcManager(this.storageMiddleware)
     }
 
     public async createNode(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', password: string): Promise<string> {
-        const tempDir: string = `${config[nodeType + "Path"]}/temp`;
+        function getNodeDirPath(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap'): string {
+            switch (nodeType) {
+                case 'signer':
+                    return config.signerPath;
+                case 'member':
+                    return config.memberPath;
+                case 'rpc':
+                    return config.rpcPath;
+                case 'bootstrap':
+                    return config.bootstrapPath;
+                default:
+                    throw new Error(`Unknown node type: ${nodeType}`);
+            }
+        }
+        const tempDir: string = `${getNodeDirPath(nodeType)}/temp`;
         const passwordFilePath: string = `${tempDir}/password.txt`;
 
         // Ensure the temporary data directory exists
@@ -42,7 +59,7 @@ class NodeManager {
         if (!match) throw new Error('Address not found in Geth output.');
 
         // Determine the final storage path based on the account address
-        const finalDir: string = `${config[nodeType + "Path"]}/${match[1]}`;
+        const finalDir: string = `${getNodeDirPath(nodeType)}/${match[1]}`;
         await this.storageMiddleware.ensureDir(finalDir);
 
         // Move the keystore and password file to the final directory
@@ -53,8 +70,23 @@ class NodeManager {
         return match[1];
     }
 
-    public async initNode(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', address: string, chainId: string): Promise<void> {        
-        const nodeDir = `${config[nodeType + "Path"]}/${address}`;
+    public async initNode(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', address: string, chainId: string): Promise<void> {   
+        function getNodeDirPath(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap'): string {
+            switch (nodeType) {
+                case 'signer':
+                    return config.signerPath;
+                case 'member':
+                    return config.memberPath;
+                case 'rpc':
+                    return config.rpcPath;
+                case 'bootstrap':
+                    return config.bootstrapPath;
+                default:
+                    throw new Error(`Unknown node type: ${nodeType}`);
+            }
+        }
+
+        const nodeDir = `${getNodeDirPath(nodeType)}/${address}`;
         const networkNodeDir = `${config.localStoragePath}/networks/${chainId}/${nodeType}/${address}`;
         const genesisFilePath = `${config.localStoragePath}/networks/${chainId}/genesis.json`;
 
@@ -94,8 +126,8 @@ class NodeManager {
     }
 
     public async startNode(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', address: string, chainId: number, externalIp?: string, subnet?: string) {
-        const actualExternalIp = externalIp || config.externalIp;
-        const actualSubnet = subnet || config.subnet;
+        const actualExternalIp = externalIp || '' // config.externalIp;
+        const actualSubnet = subnet || '' // config.subnet;
 
         const enrPath = `${config.localStoragePath}/networks/${chainId}/enr.txt`;
         try {
@@ -115,13 +147,16 @@ class NodeManager {
                 case 'member':
                     await this.memberManager.startMemberNode(chainId, address, port, enr);
                     break;
+                case 'rpc':
+                    await this.rpcManager.startRpcNode(chainId, address, port, enr);
+                    break;
                 case 'bootstrap':
                     // Ensure externalIp and subnet are provided for bootstrap nodes
-                    if (!actualExternalIp || !actualSubnet) {
-                        console.error('Missing externalIp or subnet for bootstrap node start.');
-                        return;
-                    }
-                    await this.bootstrapManager.startBootstrapNode(chainId, address, actualExternalIp, actualSubnet, port);
+                    // if (!actualExternalIp || !actualSubnet) {
+                    //     console.error('Missing externalIp or subnet for bootstrap node start.');
+                    //     return;
+                    // }
+                    await this.bootstrapManager.startBootstrapNode(chainId, address, port, actualExternalIp, actualSubnet);
                     break;
                 default:
                     console.error(`Node type ${nodeType} is not supported.`);

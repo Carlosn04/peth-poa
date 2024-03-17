@@ -61,7 +61,7 @@ export default class BootstrapManager {
         return match[1];
     }
 
-    async startBootstrapNode(chainId: number, address: string, externalIp: string, subnet: string, port: number): Promise<void> {
+    async startBootstrapNode(chainId: number, address: string,port: number, externalIp: string, subnet: string): Promise<void> {
         const networkNodeDir = `${config.localStoragePath}/networks/${chainId}/bootstrap/${address}`;
         const passwordFilePath = `${networkNodeDir}/password.txt`;
         const ipcPath = `${config.localStoragePath}/networks/${chainId}/geth.ipc`
@@ -83,22 +83,29 @@ export default class BootstrapManager {
             // '--ipcdisable',
             '--port', port.toString(),
             '--authrpc.port', port.toString(),
+            // '--discovery.v4',
+            '--discovery.v5', // needed for enr in localhost
             // '--nat', `extip:${externalIp}`,
             // '--netrestrict', subnet,
             '--verbosity', '3',
             //
-            '--http', '--http.addr', '0.0.0.0', '--http.port', '8545', '--http.corsdomain', '"*"',
-            '--discovery.v4',
-            '--discovery.v5' // needed for enr in localhost
+            // '--http', '--http.addr', '0.0.0.0', '--http.port', '8545', '--http.corsdomain', '"*"',
             // Add additional flags as needed
         ];
+
+        const bootstrapArgs = config.gethCommandArgs.bootstrap({
+            networkNodeDir,
+            chainId: chainId.toString(),
+            ipcPath,
+            port: port.toString(),
+        })
 
         const encapsulatedCleanup = () => {
             cleanupCallback([enrPath], this.storageMiddleware).catch(console.error);
         };
 
         try {
-            const process = GethCommandExecutor.startNonBlocking(gethCommandArgs, encapsulatedCleanup);
+            const process = GethCommandExecutor.startNonBlocking(bootstrapArgs, encapsulatedCleanup);
             console.log('Geth node started (non-blocking)');
             await this.extractNodeRecord(ipcPath, enrPath);
         } catch (error) {

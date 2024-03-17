@@ -56,24 +56,33 @@ export default class SignerManager {
     const ipcPath = `${config.localStoragePath}/geth.ipc`
     
     // Construct the Geth command arguments including the --bootnodes flag with the ENR
-    const gethCommandArgs = [
-      '--datadir', networkNodeDir,
-      '--port', port.toString(),
-      '--authrpc.port', port.toString(), // Geth connection
-      '--bootnodes', enr,
-      '--networkid', chainId.toString(),
-      '--unlock', address,
-      '--password', `${networkNodeDir}/password.txt`,
-      '--mine',
-      '--miner.etherbase', address,
-      '--ipcpath', ipcPath,
-      '--discovery.v4',
-      '--discovery.v5'
-      // '--ipcdisable'
-    ];
+    // const gethCommandArgs = [
+    //   '--datadir', networkNodeDir,
+    //   '--port', port.toString(),
+    //   '--authrpc.port', port.toString(), // Geth connection
+    //   '--bootnodes', enr,
+    //   '--networkid', chainId.toString(),
+    //   '--unlock', address,
+    //   '--password', `${networkNodeDir}/password.txt`,
+    //   '--mine',
+    //   '--miner.etherbase', address,
+    //   '--ipcpath', ipcPath,
+    //   '--discovery.v5'
+    //   // '--ipcdisable'
+    // ];
+    
+    const signerArgs = config.gethCommandArgs.signer({
+      networkNodeDir: networkNodeDir,
+      port: port.toString(),
+      authRpcPort: port.toString(),
+      enr,
+      chainId,
+      address,
+      ipcPath,
+    });
   
     try {
-      await GethCommandExecutor.execute(gethCommandArgs);
+      await GethCommandExecutor.execute(signerArgs);
       console.log(`Signer node started for address: ${address} on network: ${chainId}`);
     } catch (error) {
       console.error(`Failed to start signer node for address: ${address}`, error);
