@@ -59,6 +59,8 @@ const gethCommandArgs: IGethCommandArgs = {
         '--ipcdisable',
         '--discovery.v5',
         '--verbosity', verbosity,
+        // '--mine',
+        // '--miner.etherbase', params.address,
     ],
     rpc: (params) => [
         '--datadir', params.networkNodeDir,

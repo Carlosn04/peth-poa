@@ -21,7 +21,7 @@ export default class MemberManager {
     }
 
     const networkNodeDir = `${config.localStoragePath}/networks/${chainId}/member/${address}`;
-    const ipcPath = `${config.localStoragePath}/geth.ipc`
+    const ipcPath = `${config.localStoragePath}/member/geth.ipc`
     
     // Construct the Geth command arguments including the --bootnodes flag with the ENR
     const gethCommandArgs = [
@@ -41,7 +41,8 @@ export default class MemberManager {
         chainId: chainId.toString(),
         port: port.toString(),
         address,
-        enr
+        enr,
+        ipcPath,
     })
   
     try {

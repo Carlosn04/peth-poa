@@ -45,8 +45,8 @@ export const pethPoa = {
     // getNetworkConfigManager: (chainId: string) => new NetworkManager()
   },
   docker: {
-    deployNetwork: async (chainId: number) => {
-      await dockerDeployer.deployNetwork(chainId)
+    initAndDeployNetwork: async (chainId: number) => {
+      await dockerDeployer.initAndDeployNetwork(chainId)
     }
   }
 };
