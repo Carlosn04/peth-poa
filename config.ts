@@ -22,10 +22,11 @@ const gethCommandArgs: IGethCommandArgs = {
     bootstrap: (params) => [
         '--datadir', params.networkNodeDir,
         '--networkid', params.chainId,
-        '--ipcpath', params.ipcPath,
-        // '--ipcdisable',
+        // '--ipcpath', params.ipcPath,
+        '--ipcdisable',
         '--port', params.port,
-        '--authrpc.port', params.port,
+        // '--authrpc.addr', 
+        // '--authrpc.port', params.port,
         // '--discovery.v4',
         '--discovery.v5', // needed for enr in localhost
         // '--nat', `extip:${externalIp}`,

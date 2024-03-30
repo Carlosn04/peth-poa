@@ -13,7 +13,7 @@ const accountManager = new AccountManager(storageMiddleware);
 const signerManager = new SignerManager(storageMiddleware);
 const bootstrapManager = new BootstrapManager(storageMiddleware)
 const nodeManager = new NodeManager(storageMiddleware)
-const dockerDeployer = new DockerDeployer()
+const dockerDeployer = new DockerDeployer(storageMiddleware)
 
 async function createGenesis(chainId: number, period: number, epoch: number, signers: string[], alloc: Record<string, { balance: string }>) {
     const genesisCreator = new GenesisCreator({
@@ -47,7 +47,8 @@ export const pethPoa = {
   docker: {
     initAndDeployNetwork: async (chainId: number) => {
       await dockerDeployer.initAndDeployNetwork(chainId)
-    }
+    },
+    initAndDeployNode: dockerDeployer.initAndDeployNode.bind(dockerDeployer)
   }
 };
 
