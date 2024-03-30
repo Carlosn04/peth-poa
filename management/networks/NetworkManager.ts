@@ -20,7 +20,7 @@ export default class NetworkManager {
 
   constructor(storageMiddleware: IStorageMiddleware) {
     this.storageMiddleware = storageMiddleware;
-    this.portManager = new PortManager(storageMiddleware);
+    this.portManager = PortManager.getInstance(storageMiddleware);
   }
 
   // Ensures a network config file exists for the given chainId, creates if not

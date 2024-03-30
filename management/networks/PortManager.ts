@@ -1,5 +1,6 @@
 import { IStorageMiddleware } from '../../interfaces/IStorageMiddleware';
 import { config } from '../../config';
+import path from 'path';
 
 interface NetworkPorts {
     [networkId: string]: number[];
@@ -11,6 +12,7 @@ interface NetworkPortConfig {
 }
 
 export default class PortManager {
+    private static instance: PortManager;
     private storageMiddleware: IStorageMiddleware;
     private networkPortConfig: NetworkPortConfig = { ports: {}, chainIdMapping: {} };
     private filePath: string;
@@ -72,9 +74,18 @@ export default class PortManager {
 
     private async savePortAssignments(): Promise<void> {
         try {
+            const dirPath = path.dirname(config.portsBasePath);
+            await this.storageMiddleware.ensureDir(dirPath)
             await this.storageMiddleware.writeFile(this.filePath, JSON.stringify(this.networkPortConfig, null, 4));
         } catch (error) {
             console.error(`Failed to save port assignments: ${error}`);
         }
+    }
+
+    public static getInstance(storageMiddleware: IStorageMiddleware): PortManager {
+        if (!PortManager.instance) {
+            PortManager.instance = new PortManager(storageMiddleware);
+        }
+        return PortManager.instance;
     }
 }
