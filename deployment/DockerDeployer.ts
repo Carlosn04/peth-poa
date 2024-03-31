@@ -16,7 +16,7 @@ class DockerDeployer {
     this.storageMiddleware = storageMiddleware
     this.networkManager = new NetworkManager(this.storageMiddleware)
   }
-  
+
   async initAndDeployNetwork(chainId: number): Promise<void> {
     try {
       const networkDirectory = path.join(config.localStoragePath, `networks/${chainId}`);
@@ -90,25 +90,25 @@ ${node.role}-${node.address}:
   }
 
   async initAndDeployNode(chainId: number, nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', nodeAddress: string): Promise<void> {
-    const nodeDirPath = config[`${nodeType}Path`];
+    const nodeDir = config[`${nodeType}Path`];
     const networkNodeDir = path.join(config.localStoragePath, `networks/${chainId}/${nodeType}/${nodeAddress}`);
     // const genesisFilePath = path.join(config.localStoragePath, `networks/${chainId}/genesis.json`);
-    const genesisFilePath = path.join('/Users/usuario00/development/proyects/blockchain/ethereum-network-automation/local-storage/networks/444333/genesis.json')
+    const genesisFilePath = path.join(config.localStoragePath, `/networks/${chainId}/genesis.json`);
+    const absoluteGenesisPath = path.resolve(genesisFilePath)
+    const absoluteNetworkNodeDir = path.resolve(networkNodeDir)
 
-    // Ensure the directory exists and copy the node directory to the network-specific directory
-    // await fs.ensureDir(networkNodeDir);
-    // await fs.copy(path.join(nodeDirPath, nodeAddress), networkNodeDir);
-
-    // Initialize the node with the genesis block
-    // await execAsync(`geth --datadir ${networkNodeDir} init ${genesisFilePath}`);
-
-    // Dynamically construct the Docker command based on node type
+    await this.storageMiddleware.ensureDir(absoluteNetworkNodeDir);
+    // Copy the node directory inside the network directory
+    await this.storageMiddleware.copyDirectory(nodeDir, absoluteNetworkNodeDir);
 
     const port = await this.networkManager.addNode(chainId.toString(), nodeType, nodeAddress);
     if (!port) {
       console.error(`Failed to allocate port for node ${nodeAddress} in network ${chainId}.`);
       return;
     }
+
+    const SUBNET = await this.networkManager.assignSubnet()
+    
 
     const gethNodeCommand = config.gethCommandArgs[nodeType]({
       networkNodeDir: '/root/.ethereum',
@@ -121,21 +121,25 @@ ${node.role}-${node.address}:
     version: '3.8'
     services:
       ${nodeType}-${nodeAddress}:
-        image: ethereum/client-go:latest
+        image: ethereum/client-go:stable
         entrypoint: /bin/sh -c
         command: >
-          "geth --datadir /root/.ethereum init /genesis/genesis.json &&
+          "geth --datadir /root/.ethereum init /root/genesis.json &&
           geth ${gethNodeCommand}"
         volumes:
-          - ${networkNodeDir}:/root/.ethereum
-          - ${genesisFilePath}:/genesis/genesis.json
+          - ${absoluteNetworkNodeDir}:/root/.ethereum
+          - ${absoluteGenesisPath}:/root/genesis.json
         ports:
-          - "8570:8571"
+          - "${port}:${port}"
         networks:
-          - ethnetwork
+          ethnetwork:
+    
     networks:
       ethnetwork:
         driver: bridge
+        ipam:
+          config:
+            - subnet: "${SUBNET}"    
 `;
 
     // Write or update the docker-compose.yml file for the node

@@ -11,6 +11,7 @@ interface NetworkNode {
 
 interface NetworkConfig {
   chainId: string;
+  subnet: string;
   nodes: NetworkNode[];
 }
 
@@ -27,12 +28,30 @@ export default class NetworkManager {
   private async ensureNetworkConfigExists(chainId: string): Promise<void> {
     const networkConfigPath = this.getNetworkConfigPath(chainId);
     try {
-      await this.storageMiddleware.readFile(networkConfigPath);
+      let networkConfig = await this.loadNetworkConfig(chainId);
+      if (!networkConfig.subnet) {
+        networkConfig.subnet = await this.assignSubnet();
+        await this.saveNetworkConfig(chainId, networkConfig);
+      }
     } catch {
-      const initialConfig: NetworkConfig = { chainId, nodes: [] };
+      const initialConfig: NetworkConfig = { chainId, subnet: await this.assignSubnet(), nodes: [] };
       await this.saveNetworkConfig(chainId, initialConfig);
     }
-  }
+  }  
+  // private async ensureNetworkConfigExists(chainId: string): Promise<void> {
+  //   const networkConfigPath = this.getNetworkConfigPath(chainId);
+  //   try {
+  //     await this.storageMiddleware.readFile(networkConfigPath);
+  //   } catch {
+  //     const initialConfig: NetworkConfig = { chainId, nodes: [] };
+  //     await this.saveNetworkConfig(chainId, initialConfig);
+  //   }
+  // }
+
+  public async assignSubnet(): Promise<string> {    
+    const availableIp = await this.portManager.findAvailableIPs(); 
+    return `${availableIp}/24`;
+  }  
 
   // Adds a node to the network configuration and allocates a port for it
   public async addNode(chainId: string, role: string, address: string): Promise<number | undefined> {

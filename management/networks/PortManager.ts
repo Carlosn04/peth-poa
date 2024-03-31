@@ -1,6 +1,10 @@
 import { IStorageMiddleware } from '../../interfaces/IStorageMiddleware';
 import { config } from '../../config';
 import path from 'path';
+import { exec } from 'child_process';
+import util from 'util';
+
+const execAsync = util.promisify(exec);
 
 interface NetworkPorts {
     [networkId: string]: number[];
@@ -79,6 +83,29 @@ export default class PortManager {
             await this.storageMiddleware.writeFile(this.filePath, JSON.stringify(this.networkPortConfig, null, 4));
         } catch (error) {
             console.error(`Failed to save port assignments: ${error}`);
+        }
+    }
+
+    public async findAvailableIPs(maxIps: number = 1) {
+        try {
+            const { stdout, stderr } = await execAsync('ifconfig');
+            if (stderr) {
+                console.error(`Error executing ifconfig: ${stderr}`);
+                return [];
+            }
+
+            const ipRegex = /inet (\d+\.\d+\.\d+\.\d+)/g;
+            let match;
+            const ips = [];
+
+            while ((match = ipRegex.exec(stdout)) !== null && ips.length < maxIps) {
+                ips.push(match[1]);
+            }
+
+            return ips.slice(0, maxIps);
+        } catch (error) {
+            console.error(`Failed to find available IPs: ${error}`);
+            return [];
         }
     }
 
