@@ -49,7 +49,10 @@ export default class PortManager {
     
         // If there's no existing mapping, look for an available network with free ports
         if (!availableNetworkId) {
-            availableNetworkId = Object.keys(this.networkPortConfig.ports).find(networkId => this.networkPortConfig.ports[networkId].length > 0);
+            availableNetworkId = Object.keys(this.networkPortConfig.ports)
+            .find(networkId => 
+                this.networkPortConfig.ports[networkId].length > 0 &&
+                !Object.values(this.networkPortConfig.chainIdMapping).includes(networkId));
     
             // If an available network is found, map it to the chainId for future reference
             if (availableNetworkId) {

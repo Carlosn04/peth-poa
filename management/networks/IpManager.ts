@@ -68,7 +68,10 @@ export default class IPManager {
         let availableNetworkId: string | undefined = this.networkIPConfig.chainIdMapping[chainId];
     
         if (!availableNetworkId) {
-          availableNetworkId = Object.keys(this.networkIPConfig.ips).find(networkId => this.networkIPConfig.ips[networkId].length > 0);
+          availableNetworkId = Object.keys(this.networkIPConfig.ips)
+          .find(networkId => 
+            this.networkIPConfig.ips[networkId].length > 0 &&
+            !Object.values(this.networkIPConfig.chainIdMapping).includes(networkId));
     
           if (availableNetworkId) {
             this.networkIPConfig.chainIdMapping[chainId] = availableNetworkId;
