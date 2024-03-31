@@ -90,10 +90,10 @@ ${node.role}-${node.address}:
   }
 
   async initAndDeployNode(chainId: number, nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', nodeAddress: string): Promise<void> {
-    const nodeDir = config[`${nodeType}Path`];
+    const nodeDir = path.join(config[`${nodeType}Path`], nodeAddress);
     const networkNodeDir = path.join(config.localStoragePath, `networks/${chainId}/${nodeType}/${nodeAddress}`);
     // const genesisFilePath = path.join(config.localStoragePath, `networks/${chainId}/genesis.json`);
-    const genesisFilePath = path.join(config.localStoragePath, `/networks/${chainId}/genesis.json`);
+    const genesisFilePath = path.join(config.localStoragePath, `networks/${chainId}/genesis.json`);
     const absoluteGenesisPath = path.resolve(genesisFilePath)
     const absoluteNetworkNodeDir = path.resolve(networkNodeDir)
 
@@ -107,8 +107,8 @@ ${node.role}-${node.address}:
       return;
     }
 
-    const SUBNET = await this.networkManager.assignSubnet()
-    
+    const networkConfig = await this.networkManager.loadNetworkConfig(chainId.toString())
+    const SUBNET = networkConfig.subnet    
 
     const gethNodeCommand = config.gethCommandArgs[nodeType]({
       networkNodeDir: '/root/.ethereum',

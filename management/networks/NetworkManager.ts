@@ -72,7 +72,7 @@ export default class NetworkManager {
   }
 
   // Loads the network configuration for a given chainId
-  private async loadNetworkConfig(chainId: string): Promise<NetworkConfig> {
+  public async loadNetworkConfig(chainId: string): Promise<NetworkConfig> {
     const networkConfigPath = this.getNetworkConfigPath(chainId);
     const content = await this.storageMiddleware.readFile(networkConfigPath);
     return JSON.parse(content);
