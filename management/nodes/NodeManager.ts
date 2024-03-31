@@ -134,7 +134,7 @@ class NodeManager {
             const enr = nodeType === 'bootstrap' ? '' : await this.storageMiddleware.readFile(enrPath);
             // console.log(`ENR for network ${chainId}: ${enr}`);
 
-            const port = await this.networkManager.addNode(chainId.toString(), nodeType, address);
+            const { ip, port } = await this.networkManager.addNode(chainId.toString(), nodeType, address);
             if (!port) {
                 console.error(`Failed to allocate port for node ${address} in network ${chainId}.`);
                 return;

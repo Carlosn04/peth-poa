@@ -97,58 +97,103 @@ ${node.role}-${node.address}:
     const absoluteGenesisPath = path.resolve(genesisFilePath)
     const absoluteNetworkNodeDir = path.resolve(networkNodeDir)
 
+    const enrPath = `${config.localStoragePath}/networks/${chainId}/enr.txt`
+
     await this.storageMiddleware.ensureDir(absoluteNetworkNodeDir);
-    // Copy the node directory inside the network directory
     await this.storageMiddleware.copyDirectory(nodeDir, absoluteNetworkNodeDir);
 
-    const port = await this.networkManager.addNode(chainId.toString(), nodeType, nodeAddress);
+    const { ip, port } = await this.networkManager.addNode(chainId.toString(), nodeType, nodeAddress);
     if (!port) {
       console.error(`Failed to allocate port for node ${nodeAddress} in network ${chainId}.`);
       return;
     }
 
+    const enr = nodeType === 'bootstrap' ? '' : await this.storageMiddleware.readFile(enrPath);
+
     const networkConfig = await this.networkManager.loadNetworkConfig(chainId.toString())
-    const SUBNET = networkConfig.subnet    
+    const SUBNET = networkConfig.subnet
+    const uniqueIdentity = `${nodeType}-${chainId}-${nodeAddress}`
+    const httpRpcPort = '8549'
 
     const gethNodeCommand = config.gethCommandArgs[nodeType]({
       networkNodeDir: '/root/.ethereum',
       chainId: chainId.toString(),
-      ipcPath: '/root/ipc',
+      address: nodeAddress,
+      enr: enr,
+      ipcPath: '/root/ipc/geth.ipc',
       port: port.toString(),
+      authRpcPort: port.toString(),
+      httpPort: httpRpcPort
     }).join(' ');
+
+    const networkflags = `--nat "extip:${ip}" --netrestrict ${SUBNET}`
+    const portsSection = nodeType === 'rpc' ? `ports:\n          - ${port}:${httpRpcPort}` : '';
+
+    //     const networkSection = `
+    // networks:
+    //   eth${chainId}:
+    //     external: true
+    //     ipam:
+    //       config:
+    //         - subnet: "${SUBNET}"
+    // `;
+
+    const createDockerNetwork = nodeType !== 'bootstrap' ? '' : await execAsync(`docker network create --driver bridge --subnet=${SUBNET} eth${chainId}`);
 
     const dockerComposeContent = `
     version: '3.8'
     services:
-      ${nodeType}-${nodeAddress}:
+      ${uniqueIdentity}:
+        container_name: ${uniqueIdentity}
         image: ethereum/client-go:stable
         entrypoint: /bin/sh -c
         command: >
           "geth --datadir /root/.ethereum init /root/genesis.json &&
-          geth ${gethNodeCommand}"
+          geth ${gethNodeCommand} ${networkflags}"
         volumes:
           - ${absoluteNetworkNodeDir}:/root/.ethereum
           - ${absoluteGenesisPath}:/root/genesis.json
-        ports:
-          - "${port}:${port}"
+        ${portsSection}
         networks:
-          ethnetwork:
+          eth${chainId}:
+            ipv4_address: ${ip}
     
     networks:
-      ethnetwork:
-        driver: bridge
-        ipam:
-          config:
-            - subnet: "${SUBNET}"    
+      eth${chainId}:
+        external: true    
 `;
 
     // Write or update the docker-compose.yml file for the node
     const composeFilePath = path.join(networkNodeDir, 'docker-compose.yml');
     await fs.writeFile(composeFilePath, dockerComposeContent);
 
+    // Create docker network for the chainId - docker network ls to view networks
+
     // Start the node using Docker Compose
-    await execAsync(`docker-compose -f ${composeFilePath} up -d`);
+    await execAsync(`docker-compose -p eth${chainId} -f ${composeFilePath} up -d`);
     console.log('container started')
+
+    // If bootstrap node extract the ENR
+    if (nodeType === 'bootstrap') {
+      // Wait a bit to ensure the Geth node is fully up and running
+      setTimeout(async () => {
+        // uniqueIdentity to find the specific bootstrap node container
+        const enrCommand = `docker exec ${uniqueIdentity} geth attach --exec admin.nodeInfo.enr /root/ipc/geth.ipc`;
+        try {
+          const { stdout, stderr } = await execAsync(enrCommand);
+          if (stderr) {
+            console.error('Error extracting ENR:', stderr);
+            return;
+          }
+          const enr = stdout.trim().replace(/^"|"$/g, '');
+          await this.storageMiddleware.writeFile(enrPath, enr);
+          console.log('Extracted ENR:', enr);
+        } catch (error) {
+          console.error('Failed to extract ENR:', error);
+        }
+      }, 1500); // Adjust delay as necessary
+    }
+    
   }
 
 }

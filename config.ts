@@ -12,6 +12,7 @@ interface IConfig {
     bootstrapPath: string;
     genesisBasePath: string;
     portsBasePath: string;
+    ipsBasePath: string;
     networksBasePath: string;
     gethCommandArgs: IGethCommandArgs;
 }
@@ -36,7 +37,7 @@ const gethCommandArgs: IGethCommandArgs = {
     signer: (params) => [
         '--datadir', params.networkNodeDir,
         '--port', params.port,
-        '--authrpc.port', params.authRpcPort,
+        // '--authrpc.port', params.authRpcPort,
         '--bootnodes', params.enr,
         '--networkid', params.chainId,
         '--unlock', params.address,
@@ -67,12 +68,11 @@ const gethCommandArgs: IGethCommandArgs = {
         '--datadir', params.networkNodeDir,
         '--networkid', params.chainId,
         '--port', params.port,
-        '--authrpc.port', params.port,
+        //'--authrpc.port', params.port,
         '--bootnodes', params.enr,
-        '--networkid', params.chainId,
-        '--ipcdisable',
+        '--ipcpath', params.ipcPath,
         '--discovery.v5',
-        '--http', '--http.addr', '0.0.0.0', '--http.port', '8549', '--http.corsdomain', '"*"',
+        '--http', '--http.addr', '"0.0.0.0"', '--http.port', params.httpPort, '--http.corsdomain=*',// '"*"',
         '--verbosity', verbosity,
         // Additional args for RPC nodes
     ],
@@ -89,6 +89,7 @@ export const config: IConfig = {
     bootstrapPath: '../local-storage/nodes/bootstrap',
     genesisBasePath: '../local-storage/genesis',
     portsBasePath: '../local-storage/networks',
+    ipsBasePath: '../local-storage/networks',
     networksBasePath: '../local-storage/networks',
     gethCommandArgs: gethCommandArgs,
     // Add other global configuration parameters here
