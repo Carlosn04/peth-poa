@@ -53,7 +53,7 @@ const gethCommandArgs: IGethCommandArgs = {
         '--datadir', params.networkNodeDir,
         '--networkid', params.chainId,
         '--port', params.port,
-        '--authrpc.port', params.port,
+        // '--authrpc.port', params.port,
         '--bootnodes', params.enr,
         '--networkid', params.chainId,
         '--unlock', params.address,

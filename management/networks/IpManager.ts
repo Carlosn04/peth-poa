@@ -42,7 +42,7 @@ export default class IPManager {
     }
 
     private async initializeIPs(numberOfNetworks: number = 4, maxNodesPerNetwork: number = 19): Promise<void> {
-        const baseIP = (await this.findAvailableIPs())[0];
+        const baseIP = '192.168.68.53' //(await this.findAvailableIPs())[1];
         let [baseA, baseB, ,] = baseIP.split('.'); 
 
         for (let networkIndex = 0; networkIndex < numberOfNetworks; networkIndex++) {
@@ -109,13 +109,15 @@ export default class IPManager {
                 console.error(`Error executing ifconfig: ${stderr}`);
                 return [];
             }
-
-            const ipRegex = /inet (\d+\.\d+\.\d+\.\d+)/g;
+            const ipRegex = /inet (\d+\.\d+\.\d+\.\d+) .+\n.+\n.+\sstatus: active/g;
             let match;
             const ips = [];
 
             while ((match = ipRegex.exec(stdout)) !== null && ips.length < maxIps) {
-                ips.push(match[1]);
+                // Exclude local loopback address if not needed
+                if (match[1] !== '127.0.0.1') {
+                    ips.push(match[1]);
+                }
             }
 
             return ips.slice(0, maxIps);

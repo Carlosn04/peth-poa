@@ -13,7 +13,7 @@ const accountManager = new AccountManager(storageMiddleware);
 const signerManager = new SignerManager(storageMiddleware);
 const bootstrapManager = new BootstrapManager(storageMiddleware)
 const nodeManager = new NodeManager(storageMiddleware)
-const dockerDeployer = new DockerDeployer(storageMiddleware)
+const dockerDeployer = new DockerDeployer(storageMiddleware, 2) // Verbosity Level
 
 async function createGenesis(chainId: number, period: number, epoch: number, signers: string[], alloc: Record<string, { balance: string }>) {
     const genesisCreator = new GenesisCreator({
@@ -45,10 +45,11 @@ export const pethPoa = {
     // getNetworkConfigManager: (chainId: string) => new NetworkManager()
   },
   docker: {
-    initAndDeployNetwork: async (chainId: number) => {
-      await dockerDeployer.initAndDeployNetwork(chainId)
-    },
-    initAndDeployNode: dockerDeployer.initAndDeployNode.bind(dockerDeployer)
+    // initAndDeployNetwork: async (chainId: number) => {
+    //   await dockerDeployer.initAndDeployNetwork(chainId)
+    // },
+    initAndDeployNode: dockerDeployer.initAndDeployNode.bind(dockerDeployer),
+    removeNodeContainer: dockerDeployer.removeNodeContainer.bind(dockerDeployer)
   }
 };
 
