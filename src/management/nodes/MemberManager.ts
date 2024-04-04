@@ -1,6 +1,7 @@
-import { GethCommandExecutor } from '../../GethCommandExecutor';
+import { GethCommandExecutor } from '../../deployment/LocalGethDeployer';
 import { IStorageMiddleware } from '../../interfaces/IStorageMiddleware';
-import { config } from '../../config'; // Import the config
+import { config } from '../../config';
+import path from 'path'
 
 export default class MemberManager {
   private storageMiddleware: IStorageMiddleware;
@@ -10,43 +11,31 @@ export default class MemberManager {
   }
 
   public async startMemberNode(chainId: number, address: string, port: number | null | undefined, enr: string) {
-    if (!enr) {
-      console.error("ENR not available. Cannot start signer node.");
+    if (!enr || !port) {
+      const error = !enr ? "ENR not available. Cannot start signer node." : "Port not provided! Cannot start signer node."
+      console.error(error);
       return;
     }
 
-    if (!port) {
-      console.error("Port not provided! Cannot start signer node.");
-      return;
-    }
-
-    const networkNodeDir = `${config.localStoragePath}/networks/${chainId}/member/${address}`;
-    const ipcPath = `${config.localStoragePath}/member/geth.ipc`
-    
-    // Construct the Geth command arguments including the --bootnodes flag with the ENR
-    const gethCommandArgs = [
-      '--datadir', networkNodeDir,
-      '--networkid', chainId.toString(),
-      '--port', port.toString(),
-      '--authrpc.port', port.toString(), // Geth connection
-      '--bootnodes', enr,
-      '--unlock', address,
-      '--password', `${networkNodeDir}/password.txt`,
-      '--ipcdisable',
-      '--discovery.v5'
-    ];
+    const networkNodeDir = path.join(config.localStoragePath, `networks/${chainId}/member/${address}`);
+    const ipcPath = path.join(config.ipcNodePath, `${chainId}/${address}`, 'geth.ipc');
 
     const memberArgs = config.gethCommandArgs.member({
-        networkNodeDir,
-        chainId: chainId.toString(),
-        port: port.toString(),
-        address,
-        enr,
-        ipcPath,
+      networkNodeDir,
+      chainId: chainId.toString(),
+      port: port.toString(),
+      address,
+      enr,
+      ipcPath,
     })
-  
+
+    const extraFlags: string[] = [
+      '--authrpc.port', port?.toString()
+    ]
+    const fullCommand = [...memberArgs, ...extraFlags]
+
     try {
-      await GethCommandExecutor.execute(memberArgs);
+      await GethCommandExecutor.execute(fullCommand, 'member');
       console.log(`Member node started for address: ${address} on network: ${chainId}`);
     } catch (error) {
       console.error(`Failed to start member node for address: ${address}`, error);

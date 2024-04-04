@@ -16,11 +16,10 @@ export default class PortManager {
     private storageMiddleware: IStorageMiddleware;
     private networkPortConfig: NetworkPortConfig = { ports: {}, chainIdMapping: {} };
     private filePath: string;
-    private initialized: boolean = false;
 
     constructor(storageMiddleware: IStorageMiddleware) {
         this.storageMiddleware = storageMiddleware;
-        this.filePath = `${config.portsBasePath}/ports.json`;
+        this.filePath = path.join(config.portsBasePath, 'ports.json');
         this.initialize();
     }
 

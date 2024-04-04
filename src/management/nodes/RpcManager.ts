@@ -1,6 +1,7 @@
-import { GethCommandExecutor } from '../../GethCommandExecutor';
+import { GethCommandExecutor } from '../../deployment/LocalGethDeployer';
 import { IStorageMiddleware } from '../../interfaces/IStorageMiddleware';
 import { config } from '../../config'; // Import the config
+import path from 'path'
 
 export default class RpcManager {
   private storageMiddleware: IStorageMiddleware;
@@ -10,42 +11,29 @@ export default class RpcManager {
   }
 
   public async startRpcNode(chainId: number, address: string, port: number | null | undefined, enr: string) {
-    if (!enr) {
-      console.error("ENR not available. Cannot start signer node.");
+    if (!enr || !port) {
+      const error = !enr ? "ENR not available. Cannot start signer node." : "Port not provided! Cannot start signer node."
+      console.error(error);
       return;
     }
 
-    if (!port) {
-      console.error("Port not provided! Cannot start signer node.");
-      return;
-    }
-
-    const networkNodeDir = `${config.localStoragePath}/networks/${chainId}/rpc/${address}`;
-    const ipcPath = `${config.localStoragePath}/geth.ipc`
-    
-    // Construct the Geth command arguments including the --bootnodes flag with the ENR
-    const gethCommandArgs = [
-      '--datadir', networkNodeDir,
-      '--port', port.toString(),
-      '--authrpc.port', port.toString(), // Geth connection
-      '--bootnodes', enr,
-      '--networkid', chainId.toString(),
-      '--password', `${networkNodeDir}/password.txt`,
-      '--ipcdisable',
-      '--discovery.v5',
-      '--http', '--http.addr', '0.0.0.0', '--http.port', '8545', '--http.corsdomain', '"*"',  
-      // '--ipcdisable'
-    ];
+    const networkNodeDir = path.join(config.localStoragePath, `networks/${chainId}/rpc/${address}`);
+    const ipcPath = path.join(config.ipcNodePath, `${chainId}/${address}`, 'geth.ipc');
 
     const rpcArgs = config.gethCommandArgs.rpc({
-        networkNodeDir,
-        port: port.toString(),
-        chainId: chainId.toString(),
-        enr
+      networkNodeDir,
+      port: port.toString(),
+      chainId: chainId.toString(),
+      enr
     })
-  
+
+    const extraFlags: string[] = [
+      '--authrpc.port', port?.toString()
+    ]
+    const fullCommand = [...rpcArgs, ...extraFlags]
+
     try {
-      await GethCommandExecutor.execute(rpcArgs);
+      await GethCommandExecutor.execute(fullCommand, 'rpc');
       console.log(`Rpc node started for address: ${address} on network: ${chainId}`);
     } catch (error) {
       console.error(`Failed to start member node for address: ${address}`, error);

@@ -2,7 +2,7 @@ api/
 cli/
 dist/
 k8s/
-local-storage
+local-storage/networks
 node_modules/
 old/
 .env

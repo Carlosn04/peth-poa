@@ -1,5 +1,5 @@
-import { exec, spawn } from 'child_process';
-import { GethCommandExecutor } from '../../GethCommandExecutor';
+import path from 'path'
+import { GethCommandExecutor } from '../../deployment/LocalGethDeployer';
 import { config } from '../../config'
 import { IStorageMiddleware } from '../../interfaces/IStorageMiddleware';
 import SignerManager from './SignerManager';
@@ -26,69 +26,33 @@ class NodeManager {
     }
 
     public async createNode(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', password: string): Promise<string> {
-        function getNodeDirPath(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap'): string {
-            switch (nodeType) {
-                case 'signer':
-                    return config.signerPath;
-                case 'member':
-                    return config.memberPath;
-                case 'rpc':
-                    return config.rpcPath;
-                case 'bootstrap':
-                    return config.bootstrapPath;
-                default:
-                    throw new Error(`Unknown node type: ${nodeType}`);
-            }
-        }
-        const tempDir: string = `${getNodeDirPath(nodeType)}/temp`;
-        const passwordFilePath: string = `${tempDir}/password.txt`;
+        const tempDir = path.join(config[`${nodeType}Path`], 'temp');
+        const passwordFilePath = path.join(tempDir, 'password.txt');
 
-        // Ensure the temporary data directory exists
         await this.storageMiddleware.ensureDir(tempDir);
-
-        // Write the password to a file
         await this.storageMiddleware.writeFile(passwordFilePath, password);
 
-        // Execute Geth command to create a new account
         const { stdout } = await GethCommandExecutor.execute([
             'account', 'new', '--datadir', tempDir, '--password', passwordFilePath
-        ]);
+        ], nodeType);
 
-        // Extract the account address from the output
         const match = stdout.match(/Public address of the key:\s+([0-9a-fA-Fx]+)\n/);
         if (!match) throw new Error('Address not found in Geth output.');
 
-        // Determine the final storage path based on the account address
-        const finalDir: string = `${getNodeDirPath(nodeType)}/${match[1]}`;
+        const finalDir = path.join(config[`${nodeType}Path`], match[1]);
         await this.storageMiddleware.ensureDir(finalDir);
 
-        // Move the keystore and password file to the final directory
-        await this.storageMiddleware.moveDir(`${tempDir}/keystore`, `${finalDir}/keystore`);
-        await this.storageMiddleware.moveDir(passwordFilePath, `${finalDir}/password.txt`);
+        await this.storageMiddleware.moveDir(path.join(tempDir, 'keystore'), path.join(finalDir, 'keystore'));
+        await this.storageMiddleware.moveDir(passwordFilePath, path.join(finalDir, 'password.txt'));
 
-        // console.log(`${nodeType} account created with address: ${match[1]}`);
+        console.log(`${nodeType} account created with address: ${match[1]}`);
         return match[1];
     }
 
-    public async initNode(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', address: string, chainId: string): Promise<void> {   
-        function getNodeDirPath(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap'): string {
-            switch (nodeType) {
-                case 'signer':
-                    return config.signerPath;
-                case 'member':
-                    return config.memberPath;
-                case 'rpc':
-                    return config.rpcPath;
-                case 'bootstrap':
-                    return config.bootstrapPath;
-                default:
-                    throw new Error(`Unknown node type: ${nodeType}`);
-            }
-        }
-
-        const nodeDir = `${getNodeDirPath(nodeType)}/${address}`;
-        const networkNodeDir = `${config.localStoragePath}/networks/${chainId}/${nodeType}/${address}`;
-        const genesisFilePath = `${config.localStoragePath}/networks/${chainId}/genesis.json`;
+    public async initNode(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', address: string, chainId: string): Promise<void> {
+        const nodeDir = path.join(config[`${nodeType}Path`], address);
+        const networkNodeDir = path.join(config.localStoragePath, `networks/${chainId}/${nodeType}/${address}`);
+        const genesisFilePath = path.join(config.localStoragePath, `networks/${chainId}/genesis.json`);
 
         // Check if the genesis file exists. If not, it should throw an error.
         try {
@@ -106,13 +70,11 @@ class NodeManager {
         }
 
         await this.storageMiddleware.ensureDir(networkNodeDir);
-        // Copy the node directory inside the network directory
         await this.storageMiddleware.copyDirectory(nodeDir, networkNodeDir);
-
 
         // Execute Geth command to initialize the node with the existing genesis file
         try {
-            const stdout = await GethCommandExecutor.execute(['init', '--datadir', networkNodeDir, genesisFilePath]);
+            const stdout = await GethCommandExecutor.execute(['init', '--datadir', networkNodeDir, genesisFilePath], nodeType);
             console.log(`Node ${address} of type ${nodeType} initialized with chainId ${chainId}.`);
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -128,15 +90,13 @@ class NodeManager {
     public async startNode(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', address: string, chainId: number, externalIp?: string, subnet?: string) {
         const actualExternalIp = externalIp || '' // config.externalIp;
         const actualSubnet = subnet || '' // config.subnet;
-
-        const enrPath = `${config.localStoragePath}/networks/${chainId}/enr.txt`;
+        const enrPath = path.join(config.localStoragePath, `networks/${chainId}/enr.txt`);
         try {
             const enr = nodeType === 'bootstrap' ? '' : await this.storageMiddleware.readFile(enrPath);
-            // console.log(`ENR for network ${chainId}: ${enr}`);
-
             const { ip, port } = await this.networkManager.addNode(chainId.toString(), nodeType, address);
-            if (!port) {
-                console.error(`Failed to allocate port for node ${address} in network ${chainId}.`);
+
+            if (!port || !ip) {
+                console.error(`Failed to allocate port/ip for node ${address} in network ${chainId}.`);
                 return;
             }
 
@@ -164,7 +124,7 @@ class NodeManager {
         } catch (error) {
             console.error(`Error starting node: ${error}`);
         }
-      }
+    }
 }
 
 export default NodeManager;

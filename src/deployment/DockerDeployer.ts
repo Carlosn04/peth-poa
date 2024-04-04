@@ -15,7 +15,7 @@ class DockerDeployer {
 
   constructor(storageMiddleware: IStorageMiddleware, verbosityLevel: number = 0) {
     this.storageMiddleware = storageMiddleware
-    this.networkManager = new NetworkManager(this.storageMiddleware)
+    this.networkManager = NetworkManager.getInstance(this.storageMiddleware)
     this.verbosityLevel = verbosityLevel;
   }
 
@@ -90,7 +90,7 @@ class DockerDeployer {
       const { ip, port } = await this.allocateNodePort(chainId, nodeType, nodeAddress);
       if (!port || !ip ) return; // Port allocation failed, already logged
 
-      const networkConfig = await this.networkManager.loadNetworkConfig(chainId.toString());
+      const networkConfig = await this.networkManager.loadNetworkConfig(chainId);
       const uniqueIdentity = this.getUniqueIdentity(chainId, nodeType, nodeAddress);
       const enr = await this.waitForEnrAndRead(nodeDirectories.absoluteEnrPath, nodeType);
       if (!enr) return // Enr allocation failed, already logged

@@ -17,8 +17,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "crypto": "^1.0.1",
-    "fs-extra": "^11.2.0",
-    "yargs": "^17.7.2"
+    "chalk": "^4.1.0",
+    "fs-extra": "^11.2.0"
   }
 }

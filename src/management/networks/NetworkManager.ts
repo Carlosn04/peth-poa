@@ -23,6 +23,7 @@ interface NodeAllocationResult {
 }
 
 export default class NetworkManager {
+  private static instance: NetworkManager;
   private storageMiddleware: IStorageMiddleware;
   private portManager: PortManager;
   private ipManager: IPManager;
@@ -37,7 +38,7 @@ export default class NetworkManager {
   private async ensureNetworkConfigExists(chainId: string): Promise<void> {
     const networkConfigPath = this.getNetworkConfigPath(chainId);
     try {
-      let networkConfig = await this.loadNetworkConfig(chainId);
+      let networkConfig = await this.loadNetworkConfig(Number(chainId));
       if (!networkConfig.subnet) {
         networkConfig.subnet = await this.assignSubnet(Number(chainId));
         await this.saveNetworkConfig(chainId, networkConfig);
@@ -57,7 +58,7 @@ export default class NetworkManager {
   // Adds a node to the network configuration and allocates a port for it
   public async addNode(chainId: string, role: string, address: string): Promise<NodeAllocationResult> {
     await this.ensureNetworkConfigExists(chainId);
-    let networkConfig = await this.loadNetworkConfig(chainId);
+    let networkConfig = await this.loadNetworkConfig(Number(chainId));
 
     // Allocate a port and ip
     const port = await this.portManager.allocatePort(chainId);
@@ -74,8 +75,8 @@ export default class NetworkManager {
   }
 
   // Loads the network configuration for a given chainId
-  public async loadNetworkConfig(chainId: string): Promise<NetworkConfig> {
-    const networkConfigPath = this.getNetworkConfigPath(chainId);
+  public async loadNetworkConfig(chainId: number): Promise<NetworkConfig> {
+    const networkConfigPath = this.getNetworkConfigPath(chainId.toString());
     const content = await this.storageMiddleware.readFile(networkConfigPath);
     return JSON.parse(content);
   }
@@ -89,5 +90,12 @@ export default class NetworkManager {
   // Helper method to get the file path for a network configuration based on chainId
   private getNetworkConfigPath(chainId: string): string {
     return path.join(config.networksBasePath, `${chainId}`, 'network-config.json');
+  }
+
+  public static getInstance(storageMiddleware: IStorageMiddleware): NetworkManager {
+    if (!NetworkManager.instance) {
+      NetworkManager.instance = new NetworkManager(storageMiddleware);
+    }
+    return NetworkManager.instance;
   }
 }

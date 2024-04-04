@@ -27,7 +27,7 @@ export default class IPManager {
 
     constructor(storageMiddleware: IStorageMiddleware) {
         this.storageMiddleware = storageMiddleware;
-        this.filePath = `${config.ipsBasePath}/ips.json`;
+        this.filePath = path.join(config.ipsBasePath, 'ips.json');
         this.initialize();
     }
 

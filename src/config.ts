@@ -1,16 +1,20 @@
+const path = require('path')
+
+const basePath = path.resolve(__dirname, '..');
+
 interface IGethCommandArgs {
     [nodeType: string]: (params: any) => string[];
 }
 
 interface IConfig {
     localStoragePath: string;
+    ipcNodePath: string,
     accountPath: string;
     nodePath: string;
     signerPath: string;
     memberPath: string;
     rpcPath: string;
     bootstrapPath: string;
-    genesisBasePath: string;
     portsBasePath: string;
     ipsBasePath: string;
     networksBasePath: string;
@@ -24,19 +28,15 @@ const gethCommandArgs: IGethCommandArgs = {
         '--datadir', params.networkNodeDir,
         '--networkid', params.chainId,
         '--ipcpath', params.ipcPath,
-        // '--ipcdisable',
         '--port', params.port,
-        // '--authrpc.addr', 
         // '--authrpc.port', params.port,
-        // '--discovery.v4',
-        '--discovery.v5', // needed for enr in localhost
-        // '--nat', `extip:${externalIp}`,
-        // '--netrestrict', subnet,
+        '--discovery.v5', // needed for enr
         '--verbosity', verbosity,
     ],
     signer: (params) => [
         '--datadir', params.networkNodeDir,
         '--port', params.port,
+        // '--authrpc.addr', params.ip,
         // '--authrpc.port', params.authRpcPort,
         '--bootnodes', params.enr,
         '--networkid', params.chainId,
@@ -62,7 +62,7 @@ const gethCommandArgs: IGethCommandArgs = {
         '--discovery.v5',
         '--verbosity', verbosity,
         // '--mine',
-        // '--miner.etherbase', params.address,
+        // '--miner.etherbase', params.address, In case you want to add a member as signer in the consensus
     ],
     rpc: (params) => [
         '--datadir', params.networkNodeDir,
@@ -79,18 +79,17 @@ const gethCommandArgs: IGethCommandArgs = {
 };
 
 export const config: IConfig = {
-    localStoragePath: '../local-storage',
-    accountPath: '../local-storage/accounts',
-    nodePath: '../local-storage/nodes',
-    signerPath: '../local-storage/nodes/signer',
-    memberPath: '../local-storage/nodes/member',
-    rpcPath: '../local-storage/nodes/rpc',
-    // bootnodePath: '../local-storage/nodes/bootnode',
-    bootstrapPath: '../local-storage/nodes/bootstrap',
-    genesisBasePath: '../local-storage/genesis',
-    portsBasePath: '../local-storage/networks',
-    ipsBasePath: '../local-storage/networks',
-    networksBasePath: '../local-storage/networks',
+    localStoragePath: path.resolve(basePath, 'local-storage'),
+    ipcNodePath: 'ipc',
+    accountPath: path.resolve(basePath, 'local-storage/accounts'),
+    nodePath: path.resolve(basePath, 'local-storage/nodes'),
+    signerPath: path.resolve(basePath, 'local-storage/nodes/signer'),
+    memberPath: path.resolve(basePath, 'local-storage/nodes/member'),
+    rpcPath: path.resolve(basePath, 'local-storage/nodes/rpc'),
+    bootstrapPath: path.resolve(basePath, 'local-storage/nodes/bootstrap'),
+    portsBasePath: path.resolve(basePath, 'local-storage/networks'),
+    ipsBasePath: path.resolve(basePath, 'local-storage/networks'),
+    networksBasePath: path.resolve(basePath, 'local-storage/networks'),
     gethCommandArgs: gethCommandArgs,
     // Add other global configuration parameters here
 };
