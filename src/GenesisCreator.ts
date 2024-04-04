@@ -71,19 +71,6 @@ class GenesisCreator {
     console.log(`Genesis file created at ${genesisFilePath}`);
 
     return true
-
-    // Update network-config.json
-    // const networkConfigPath = path.join(networkDirectory, 'network-config.json');
-    // const networkConfig = {
-    //   genesisPath: 'genesis.json', // Relative path within the network directory
-    //   nodes: {}, // Placeholder for node paths
-    //   deployed: false,
-    //   running: false,
-    // };
-
-    // // Write or update network-config.json
-    // await fs.writeJson(networkConfigPath, networkConfig, { spaces: 2 });
-    // console.log(`Network configuration updated: ${networkConfigPath}`);
   }
 }
 
