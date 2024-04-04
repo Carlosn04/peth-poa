@@ -1,0 +1,10 @@
+api/
+cli/
+dist/
+k8s/
+local-storage/
+node_modules/
+old/
+.env
+dockerfile
+yarn.lock
