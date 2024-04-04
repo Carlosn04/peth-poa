@@ -8,3 +8,4 @@ old/
 .env
 dockerfile
 yarn.lock
+.DS_Store
