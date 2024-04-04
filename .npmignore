@@ -1,6 +1,5 @@
 api/
 cli/
-dist/
 k8s/
 local-storage/networks
 node_modules/
