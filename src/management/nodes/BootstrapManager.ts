@@ -58,6 +58,6 @@ export default class BootstrapManager {
             } catch (error) {
                 console.error(`Failed to extract ENR for the bootstrap node in network`, error);
             }
-        }, 1500);
+        }, 1000);
     }
 }

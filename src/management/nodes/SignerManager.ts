@@ -36,7 +36,7 @@ export default class SignerManager {
     const fullCommand = [...signerArgs, ...extraFlags]
 
     try {
-      await GethCommandExecutor.execute(fullCommand, 'signer');
+      GethCommandExecutor.startNonBlocking(fullCommand, 'signer');
       console.log(`Signer node started for address: ${address} on network: ${chainId}`);
     } catch (error) {
       console.error(`Failed to start signer node for address: ${address}`, error);

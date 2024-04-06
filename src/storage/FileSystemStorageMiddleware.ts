@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import { promises as fs, Dirent } from 'fs';
 import { join } from 'path';
 import { IStorageMiddleware } from '../interfaces/IStorageMiddleware';
 
@@ -9,6 +9,10 @@ export default class FileSystemStorageMiddleware implements IStorageMiddleware {
 
   async readFile(path: string): Promise<string> {
     return fs.readFile(path, { encoding: 'utf8' });
+  }
+
+  async readDir(path: string): Promise<Dirent[]> {
+    return fs.readdir(path, { withFileTypes: true });
   }
 
   async deleteFile(path: string): Promise<void> {

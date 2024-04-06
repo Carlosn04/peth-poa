@@ -84,6 +84,31 @@ export default class PortManager {
         }
     }
 
+    public async updateGlobalPortAllocations(availableResourcesByChainId: Record<string, { availableIPs: string[]; availablePorts: string[] }>): Promise<void> {
+        // Iterate over each chainId in the available resources
+        Object.entries(availableResourcesByChainId).forEach(([chainId, { availablePorts }]) => {
+            const networkId = this.networkPortConfig.chainIdMapping[chainId];
+            if (!networkId) {
+                console.error(`No network found for chainId ${chainId}. Skipping port updates.`);
+                return;
+            }
+
+            // Ensure unique addition of available ports back to the corresponding network's port list
+            let networkPorts = this.networkPortConfig.ports[networkId] || [];
+            availablePorts.forEach(port => {
+                if (!networkPorts.includes(Number(port))) {
+                    networkPorts.push(Number(port));
+                }
+            });
+
+            // Sort the ports in the network for neatness and consistency
+            this.networkPortConfig.ports[networkId] = networkPorts.sort((a, b) => a - b);
+        });
+
+        // Save the updated port assignments
+        await this.savePortAssignments();
+    }      
+
     public static getInstance(storageMiddleware: IStorageMiddleware): PortManager {
         if (!PortManager.instance) {
             PortManager.instance = new PortManager(storageMiddleware);

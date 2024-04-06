@@ -42,7 +42,17 @@ class GenesisCreator {
     return prefix + middle + suffix;
   }
 
+  private ethToGwei(ethAmount: string): string {
+    const ethInWei = BigInt(Math.floor(parseFloat(ethAmount) * 1e9)).toString();
+    return ethInWei;
+  }
+
   private composeGenesisData(): object {
+    const allocInGwei = Object.entries(this.genesisConfig.alloc).reduce((acc, [address, { balance }]) => {
+      acc[address] = { balance: this.ethToGwei(balance) };
+      return acc;
+    }, {} as Record<string, { balance: string }>);
+
     return {
       config: {
         chainId: this.genesisConfig.chainId,
@@ -63,7 +73,7 @@ class GenesisCreator {
       difficulty: "1",
       gasLimit: "8000000",
       extradata: this.generateExtradata(),
-      alloc: this.genesisConfig.alloc,
+      alloc: allocInGwei,
     };
   }
 

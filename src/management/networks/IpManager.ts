@@ -152,8 +152,42 @@ export default class IPManager {
             console.error(`Error retrieving subnet for chainId ${chainId}:`, error);
             return undefined;
         }
-    }    
+    }
 
+    public async updateGlobalIPAllocations(availableResourcesByChainId: Record<string, { availableIPs: string[]; availablePorts: string[] }>): Promise<void> {
+        // Iterate over each chainId in the available resources
+        Object.entries(availableResourcesByChainId).forEach(([chainId, { availableIPs }]) => {
+            const networkId = this.networkIPConfig.chainIdMapping[chainId];
+            if (!networkId) {
+                console.error(`No network found for chainId ${chainId}. Skipping IP updates.`);
+                return;
+            }
+    
+            // Ensure unique addition of available IPs back to the corresponding network's IP list
+            const networkIPs = this.networkIPConfig.ips[networkId];
+            availableIPs.forEach(ip => {
+                if (!networkIPs.includes(ip)) {
+                    networkIPs.push(ip);
+                }
+            });
+    
+            // Sort the IPs in the network for neatness and consistency
+            this.networkIPConfig.ips[networkId] = networkIPs.sort((a, b) => {
+                const aParts = a.split('.').map(Number);
+                const bParts = b.split('.').map(Number);
+                for (let i = 0; i < aParts.length; i++) {
+                    if (aParts[i] !== bParts[i]) {
+                        return aParts[i] - bParts[i];
+                    }
+                }
+                return 0;
+            });
+        });
+    
+        // Save the updated IP assignments
+        await this.saveIPAssignments();
+    }
+    
     public static getInstance(storageMiddleware: IStorageMiddleware): IPManager {
         if (!IPManager.instance) {
             IPManager.instance = new IPManager(storageMiddleware);

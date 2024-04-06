@@ -1,5 +1,4 @@
-const path = require('path')
-
+import path from 'path'
 const basePath = path.resolve(__dirname, '..');
 
 interface IGethCommandArgs {
@@ -72,7 +71,7 @@ const gethCommandArgs: IGethCommandArgs = {
         '--bootnodes', params.enr,
         '--ipcpath', params.ipcPath,
         '--discovery.v5',
-        '--http', '--http.addr', '"0.0.0.0"', '--http.port', params.httpPort, '--http.corsdomain=*',// '"*"',
+        '--http', '--http.addr', params.httpIp, '--http.port', params.httpPort, '--http.corsdomain=*',// '"*"',
         '--verbosity', verbosity,
         // Additional args for RPC nodes
     ],

@@ -10,7 +10,7 @@ export default class RpcManager {
     this.storageMiddleware = storageMiddleware;
   }
 
-  public async startRpcNode(chainId: number, address: string, port: number | null | undefined, enr: string) {
+  public async startRpcNode(chainId: number, address: string, enr: string, port: number | null | undefined, ip: string | null) {
     if (!enr || !port) {
       const error = !enr ? "ENR not available. Cannot start signer node." : "Port not provided! Cannot start signer node."
       console.error(error);
@@ -24,7 +24,10 @@ export default class RpcManager {
       networkNodeDir,
       port: port.toString(),
       chainId: chainId.toString(),
-      enr
+      enr,
+      httpPort: (8755).toString(),
+      httpIp: ip || '0.0.0.0',
+      ipcPath
     })
 
     const extraFlags: string[] = [
@@ -33,7 +36,7 @@ export default class RpcManager {
     const fullCommand = [...rpcArgs, ...extraFlags]
 
     try {
-      await GethCommandExecutor.execute(fullCommand, 'rpc');
+      GethCommandExecutor.startNonBlocking(fullCommand, 'rpc');
       console.log(`Rpc node started for address: ${address} on network: ${chainId}`);
     } catch (error) {
       console.error(`Failed to start member node for address: ${address}`, error);

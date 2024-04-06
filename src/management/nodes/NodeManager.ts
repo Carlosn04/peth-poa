@@ -49,9 +49,9 @@ class NodeManager {
         return match[1];
     }
 
-    public async initNode(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', address: string, chainId: string): Promise<void> {
-        const nodeDir = path.join(config[`${nodeType}Path`], address);
-        const networkNodeDir = path.join(config.localStoragePath, `networks/${chainId}/${nodeType}/${address}`);
+    public async initNode(chainId: number, nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', nodeAddress: string): Promise<void> {
+        const nodeDir = path.join(config[`${nodeType}Path`], nodeAddress);
+        const networkNodeDir = path.join(config.localStoragePath, `networks/${chainId}/${nodeType}/${nodeAddress}`);
         const genesisFilePath = path.join(config.localStoragePath, `networks/${chainId}/genesis.json`);
 
         // Check if the genesis file exists. If not, it should throw an error.
@@ -66,7 +66,7 @@ class NodeManager {
             await this.storageMiddleware.readFile(`${nodeDir}/password.txt`); // Example check for keystore directory
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : 'Unknown error';
-            throw new Error(`Node directory or keystore not found for address ${address} in ${nodeType}. Node must be setup beforehand: ${message}`);
+            throw new Error(`Node directory or keystore not found for address ${nodeAddress} in ${nodeType}. Node must be setup beforehand: ${message}`);
         }
 
         await this.storageMiddleware.ensureDir(networkNodeDir);
@@ -75,40 +75,40 @@ class NodeManager {
         // Execute Geth command to initialize the node with the existing genesis file
         try {
             const stdout = await GethCommandExecutor.execute(['init', '--datadir', networkNodeDir, genesisFilePath], nodeType);
-            console.log(`Node ${address} of type ${nodeType} initialized with chainId ${chainId}.`);
+            console.log(`Node ${nodeAddress} of type ${nodeType} initialized with chainId ${chainId}.`);
         } catch (error: unknown) {
             if (error instanceof Error) {
-                console.error(`Failed to initialize node ${address}:`, error.message);
+                console.error(`Failed to initialize node ${nodeAddress}:`, error.message);
                 throw error; // Re-throw the original error if it's an instance of Error
             } else {
-                console.error(`Failed to initialize node ${address}: Unknown error`);
+                console.error(`Failed to initialize node ${nodeAddress}: Unknown error`);
                 throw new Error('Unknown error occurred during node initialization');
             }
         }
     }
 
-    public async startNode(nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', address: string, chainId: number, externalIp?: string, subnet?: string) {
+    public async startNode(chainId: number, nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', nodeAddress: string, externalIp?: string, subnet?: string) {
         const actualExternalIp = externalIp || '' // config.externalIp;
         const actualSubnet = subnet || '' // config.subnet;
         const enrPath = path.join(config.localStoragePath, `networks/${chainId}/enr.txt`);
         try {
             const enr = nodeType === 'bootstrap' ? '' : await this.storageMiddleware.readFile(enrPath);
-            const { ip, port } = await this.networkManager.addNode(chainId.toString(), nodeType, address);
+            const { ip, port } = await this.networkManager.addNode(chainId.toString(), nodeType, nodeAddress);
 
             if (!port || !ip) {
-                console.error(`Failed to allocate port/ip for node ${address} in network ${chainId}.`);
+                console.error(`Failed to allocate port/ip for node ${nodeAddress} in network ${chainId}.`);
                 return;
             }
 
             switch (nodeType) {
                 case 'signer':
-                    await this.signerManager.startSignerNode(chainId, address, port, enr);
+                    await this.signerManager.startSignerNode(chainId, nodeAddress, port, enr);
                     break;
                 case 'member':
-                    await this.memberManager.startMemberNode(chainId, address, port, enr);
+                    await this.memberManager.startMemberNode(chainId, nodeAddress, port, enr);
                     break;
                 case 'rpc':
-                    await this.rpcManager.startRpcNode(chainId, address, port, enr);
+                    await this.rpcManager.startRpcNode(chainId, nodeAddress, enr, port, ip);
                     break;
                 case 'bootstrap':
                     // Ensure externalIp and subnet are provided for bootstrap nodes
@@ -116,7 +116,7 @@ class NodeManager {
                     //     console.error('Missing externalIp or subnet for bootstrap node start.');
                     //     return;
                     // }
-                    await this.bootstrapManager.startBootstrapNode(chainId, address, port, actualExternalIp, actualSubnet);
+                    await this.bootstrapManager.startBootstrapNode(chainId, nodeAddress, port, actualExternalIp, actualSubnet);
                     break;
                 default:
                     console.error(`Node type ${nodeType} is not supported.`);

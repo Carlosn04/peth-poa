@@ -5,6 +5,7 @@ import { exec } from 'child_process';
 import { config } from '../config';
 import { IStorageMiddleware } from '../interfaces/IStorageMiddleware';
 import NetworkManager from '../management/networks/NetworkManager';
+import GenesisFactory from '../management/GenesisManager';
 
 const execAsync = util.promisify(exec);
 
@@ -79,7 +80,34 @@ class DockerDeployer {
     } catch (error) {
       this.logError(`Error removing containers/network for chainId=${chainId}: ${error}`, 1);
     }
-  }  
+  }
+
+  async initAndDeployNetwork(chainId: number) {
+    // Default addresses within the package
+    const addresses = {
+      bootstrapNodeAddress: "0xCeB5ca48b5DE1839379FAEDD0572F7D59B279749",
+      signerNodeAddress: "0x64fB496Bbfd447Dba254aFe4E28a325cb19ec25f",
+      rpcNodeAddress: '0x46198b00f237407133da9CcFb2D567dF159284D4',
+      memberNodeAddress: '0xBa551f402cfC912482cB15466641E6FC3B2D63f2',
+    };
+
+    const alloc = {
+      [addresses.signerNodeAddress]: { balance: '100' }, // This value is converted to gwei
+      [addresses.memberNodeAddress]: { balance: '100' }, //
+    };
+    const signers = [addresses.signerNodeAddress];
+
+    await GenesisFactory.createGenesis(chainId, signers, alloc)
+    await this.initAndDeployNode(chainId, 'bootstrap', addresses.bootstrapNodeAddress)
+    await this.delay(500)
+    await this.initAndDeployNode(chainId, 'signer', addresses.signerNodeAddress)
+    await this.delay(500)
+    await this.initAndDeployNode(chainId, 'rpc', addresses.rpcNodeAddress)
+  }
+
+  private delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
   async initAndDeployNode(chainId: number, nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', nodeAddress: string): Promise<void> {
     try {
@@ -207,6 +235,7 @@ networks:
       port: port.toString(),
       authRpcPort: port.toString(),
       httpPort: httpRpcPort,
+      httpIp: '0.0.0.0'
     });
 
     const fullCommand = baseCommandArgs.concat(networkflags).join(' ');
@@ -218,12 +247,37 @@ networks:
     await fs.writeFile(composeFilePath, dockerComposeContent);
   }  
 
+  private async findOverlappingNetwork(subnet: string): Promise<string | null> {
+    try {
+      const { stdout } = await execAsync('docker network ls --quiet');
+      const networkIds = stdout.split('\n').filter(id => id.trim());
+      for (const id of networkIds) {
+        const { stdout: inspectOut } = await execAsync(`docker network inspect ${id} --format '{{json .IPAM.Config}}'`);
+        const ipamConfigs = JSON.parse(inspectOut);
+        if (ipamConfigs.some((config: { Subnet: string }) => config.Subnet === subnet)) {
+          return id; // Found an overlapping network, return its ID
+        }
+      }
+      return null; // No overlap found
+    } catch (error) {
+      console.error(`Error checking for overlapping networks: ${error}`);
+      return null; // Error case, return null to indicate failure in checking
+    }
+  }
+
   private async handleDockerNetwork(chainId: number, subnet: string): Promise<void> {
     const networkName = `eth${chainId}`;
     const existingNetworksCommandResult = await execAsync(`docker network ls --filter name=^${networkName}$ --format "{{.Name}}"`);
-    const existingNetworks = existingNetworksCommandResult.stdout.trim();
-  
-    if (!existingNetworks) {
+    const existingNetwork = existingNetworksCommandResult.stdout.trim();
+
+    const overlappingNetworkId = await this.findOverlappingNetwork(subnet);
+
+    if (!existingNetwork && overlappingNetworkId) {
+      this.log(`Removing overlapping Docker network with ID: ${overlappingNetworkId}`, 2);
+      await execAsync(`docker network rm ${overlappingNetworkId}`); // Remove the overlapping network
+      this.log(`Creating Docker network: ${networkName} with subnet: ${subnet}`, 2);
+      await execAsync(`docker network create --driver bridge --subnet=${subnet} ${networkName}`); // Create the new network
+    } else if (!existingNetwork) {
       this.log(`Creating Docker network: ${networkName} with subnet: ${subnet}`, 2);
       await execAsync(`docker network create --driver bridge --subnet=${subnet} ${networkName}`);
     } else {

@@ -1,5 +1,8 @@
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import { IStorageMiddleware } from '../interfaces/IStorageMiddleware'
 import chalk from 'chalk';
+import NodeManager from '../management/nodes/NodeManager'
+import GenesisFactory from '../management/GenesisManager';
 
 // Define the node types as a type rather than an interface to restrict the values
 type NodeType = 'bootstrap' | 'signer' | 'rpc' | 'member' | 'account';
@@ -53,7 +56,7 @@ export class GethCommandExecutor {
         });
     }
 
-    static startNonBlocking(command: string[], nodeType: NodeType, cleanupCallback?: () => void): ChildProcessWithoutNullStreams {
+    static startNonBlocking(command: string[], nodeType: NodeType): ChildProcessWithoutNullStreams {
         const process = spawn('geth', command);
 
         const colorize = nodeTypeColors[nodeType] || chalk.white;
@@ -66,14 +69,63 @@ export class GethCommandExecutor {
 
         process.on('close', (code) => {
             logData(`Geth process exited with code ${code}`);
-            cleanupCallback?.();
         });
 
         process.on('SIGINT', () => {
             logData('Geth process interrupted with SIGINT');
-            cleanupCallback?.();
         });
 
         return process;
+    }
+}
+
+export default class LocalGethDeployer {
+    private nodeManager: NodeManager;
+
+    constructor(storageMiddleware: IStorageMiddleware) {
+        this.nodeManager = new NodeManager(storageMiddleware);
+    }
+
+    async initAndStartNode(chainId: number, nodeType: 'signer' | 'member' | 'rpc' | 'bootstrap', nodeAddress: string, externalIp?: string, subnet?: string): Promise<void> {
+        try {
+            // Step 1: Create Node and Get Address 
+            // const address = await this.nodeManager.createNode(nodeType, password);
+            // console.log(`${nodeType} node created at address: ${address}`);
+
+            // Step 2: Initialize Node with given Chain ID
+            await this.nodeManager.initNode(chainId, nodeType, nodeAddress);
+
+            // Step 3: Start Node
+            await this.nodeManager.startNode(chainId, nodeType, nodeAddress);
+        } catch (error) {
+            console.error(`Failed to initialize and start ${nodeType} node:`, error);
+        }
+    }
+
+    async initAndStartNetwork(chainId: number) {
+        // Default addresses within the package
+        const addresses = {
+            bootstrapNodeAddress: "0xCeB5ca48b5DE1839379FAEDD0572F7D59B279749",
+            signerNodeAddress: "0x64fB496Bbfd447Dba254aFe4E28a325cb19ec25f",
+            rpcNodeAddress: '0x46198b00f237407133da9CcFb2D567dF159284D4',
+            memberNodeAddress: '0xBa551f402cfC912482cB15466641E6FC3B2D63f2',
+        };
+
+        const alloc = {
+            [addresses.signerNodeAddress]: { balance: '100' }, // This value is converted to gwei
+            [addresses.memberNodeAddress]: { balance: '100' }, //
+        };
+        const signers = [addresses.signerNodeAddress];
+
+        await GenesisFactory.createGenesis(chainId, signers, alloc)
+        await this.initAndStartNode(chainId, 'bootstrap', addresses.bootstrapNodeAddress)
+        await this.delay(1500)
+        await this.initAndStartNode(chainId, 'signer', addresses.signerNodeAddress)
+        await this.delay(500)
+        await this.initAndStartNode(chainId, 'rpc', addresses.rpcNodeAddress)
+    }
+
+    private delay(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 }
