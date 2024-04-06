@@ -25,8 +25,8 @@ export default class RpcManager {
       port: port.toString(),
       chainId: chainId.toString(),
       enr,
-      httpPort: (8755).toString(),
-      httpIp: ip || '0.0.0.0',
+      httpPort: port.toString(),
+      httpIp: '0.0.0.0',
       ipcPath
     })
 

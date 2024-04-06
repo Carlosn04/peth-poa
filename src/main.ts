@@ -10,7 +10,7 @@ const storageMiddleware = new FileSystemStorageMiddleware();
 const accountManager = new AccountManager(storageMiddleware);
 const nodeManager = new NodeManager(storageMiddleware)
 const networkManager = NetworkManager.getInstance(storageMiddleware)
-const dockerDeployer = new DockerDeployer(storageMiddleware, 0) // Verbosity Level
+const dockerDeployer = new DockerDeployer(storageMiddleware, 1) // Verbosity Level
 const localGethDeployer = new LocalGethDeployer(storageMiddleware)
   
 export const pethPoa = {

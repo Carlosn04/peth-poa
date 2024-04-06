@@ -8,10 +8,29 @@ The primary goal of `ethereum-network-automation` is to enable developers and bl
 
 ## Prerequisites
 
-Before deploying networks using this package, ensure that you have the following prerequisites installed:
+Before you begin deploying networks with this package, it's crucial to have the necessary tools and environments set up. Here are the prerequisites based on your deployment method:
 
-- **For local deployments using Geth**: Geth version 1.13.14-stable or later.
-- **For Docker deployments**: Docker must be installed and running. The Docker deployments use the `ethereum/client-go:stable` image.
+### Local Deployments Using Geth
+For deploying Ethereum networks locally using Geth, you'll need:
+- **Geth**: Version 1.13.14-stable or later installed on your system. Geth is the Go Ethereum client and is essential for running nodes on the Ethereum network.
+
+### Docker Deployments
+For deploying networks within Docker containers, you'll need:
+- **Docker**: Ensure Docker is installed and running on your system. This package uses the `ethereum/client-go:stable` Docker image for deployments, providing a standardized Ethereum client environment.
+
+### Windows Users
+This package is optimized for Linux-based environments, including macOS and Linux distributions. Windows users can still utilize this package by setting up WSL (Windows Subsystem for Linux), which allows you to run a Linux environment directly on Windows, without the overhead of a traditional virtual machine.
+
+#### Setting Up WSL
+To use this package on Windows, follow these steps to set up WSL:
+1. **Enable WSL**: Open PowerShell as Administrator and run: `wsl --install`. This command enables WSL on Windows and installs the Ubuntu Linux distribution by default.
+2. **Restart your computer** if required by the installation process.
+3. **Launch WSL**: After installation, open the Ubuntu app from the Start menu to set up your new Linux distribution, including creating a user account and password.
+4. **Install Prerequisites**: Inside the WSL environment, install Geth and Docker following the Linux installation instructions. Note that Docker Desktop for Windows now supports integration with WSL 2, enabling you to run Docker containers directly within your WSL distribution.
+
+#### Important Notes
+- When running commands for this package in a Windows environment, ensure you're operating within the WSL terminal to avoid compatibility issues.
+- Due to the use of Linux-specific features and filesystem permissions, running this package directly on Windows (outside of WSL) is not supported and may lead to unexpected behavior.
 
 ## Security Notice
 

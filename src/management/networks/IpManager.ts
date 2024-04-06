@@ -42,23 +42,24 @@ export default class IPManager {
     }
 
     private async initializeIPs(numberOfNetworks: number = 4, maxNodesPerNetwork: number = 19): Promise<void> {
-        const baseIP = '192.168.68.53' //(await this.findAvailableIPs())[1];
-        let [baseA, baseB, ,] = baseIP.split('.'); 
-
+        // Start from the base subnet 192.168.68.0
+        let baseA = 192, baseB = 168, baseC = 68;
+        
         for (let networkIndex = 0; networkIndex < numberOfNetworks; networkIndex++) {
             const networkId = `network_${networkIndex + 1}`;
-            const networkSegment = (networkIndex * maxNodesPerNetwork) % 254; // Ensure it stays within .1-.254 range
             const networkIPs = [];
-            const subnet = `${baseA}.${baseB}.${networkSegment}.0/24`
-    
+            const subnet = `${baseA}.${baseB}.${baseC}.0/24`;
+            
             for (let nodeIndex = 1; nodeIndex <= maxNodesPerNetwork; nodeIndex++) {
-                const nodeIP = `${baseA}.${baseB}.${networkSegment}.${nodeIndex}`;
+                const nodeIP = `${baseA}.${baseB}.${baseC}.${nodeIndex}`;
                 networkIPs.push(nodeIP);
             }
-    
-            // Assign generated IPs to the network
+            
+            // Assign generated IPs and subnet to the network
             this.networkIPConfig.ips[networkId] = networkIPs;
             this.networkIPConfig.subnets[networkId] = subnet;
+            
+            baseC++; // Move to the next subnet for the next network
         }
         await this.saveIPAssignments();
     }    

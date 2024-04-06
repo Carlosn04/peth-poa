@@ -105,6 +105,7 @@ class DockerDeployer {
     await this.initAndDeployNode(chainId, 'rpc', addresses.rpcNodeAddress)
     await this.delay(500)
     await this.initAndDeployNode(chainId, 'member', addresses.rpcNodeAddress)
+    this.log('Docker Network succesfully deployed!', 0)
   }
 
   private delay(ms: number) {
@@ -255,8 +256,17 @@ networks:
       const networkIds = stdout.split('\n').filter(id => id.trim());
       for (const id of networkIds) {
         const { stdout: inspectOut } = await execAsync(`docker network inspect ${id} --format '{{json .IPAM.Config}}'`);
-        const ipamConfigs = JSON.parse(inspectOut);
-        if (ipamConfigs.some((config: { Subnet: string }) => config.Subnet === subnet)) {
+        // Parse JSON safely, use try-catch if necessary
+        let ipamConfigs;
+        try {
+          ipamConfigs = JSON.parse(inspectOut);
+        } catch (parseError) {
+          // console.error(`Failed to parse IPAM config for network ID ${id}:`, parseError);
+          continue; // Skip this iteration if parsing fails
+        }
+
+        // Proceed if ipamConfigs is an array and not null
+        if (Array.isArray(ipamConfigs) && ipamConfigs.some((config: { Subnet: string }) => config.Subnet === subnet)) {
           return id; // Found an overlapping network, return its ID
         }
       }

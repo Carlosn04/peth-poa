@@ -87,7 +87,6 @@ class GenesisCreator {
 
   private async writeGenesisFile(filePath: string, data: object): Promise<void> {
     await fs.writeJson(filePath, data, { spaces: 2 });
-    console.log(`Genesis file created!`);
   }
 
   public async generateGenesisFile(): Promise<void> {
