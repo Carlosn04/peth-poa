@@ -94,27 +94,27 @@ Please note, these accounts are included for development and testing purposes on
 
 ### Account Management
 
-- `createAccount(accountName, password)`: Creates a new account with the specified name and password.
+- `pethPoa.accounts.createAccount(accountName, password)`: Creates a new account with the specified name and password.
 
 ### Genesis Creation
 
-- `createGenesis(chainId, signers, alloc)`: Generates a genesis file for the specified chain ID, including signer addresses and pre-allocated balances.
+- `pethPoa.genesis.createGenesis(chainId, signers, alloc)`: Generates a genesis file for the specified chain ID, including signer addresses and pre-allocated balances.
 
 ### Network Configuration
 
-- `getConfig(chainId)`: Retrieves the current network configuration.
+- `pethPoa.network.getConfig(chainId)`: Retrieves the current network configuration.
 
 ### Geth Deployment
 
-- `initAndStartNode(chainId, nodeType, nodeAddress)`: Initializes and starts a Geth node of the specified type.
-- `initAndStartNetwork(chainId)`: Initializes and starts a local network for the specified chain ID.
+- `pethPoa.geth.initAndStartNode(chainId, nodeType, nodeAddress)`: Initializes and starts a Geth node of the specified type.
+- `pethPoa.geth.initAndStartNetwork(chainId)`: Initializes and starts a local network for the specified chain ID.
 
 ### Docker Deployment
 
-- `initAndDeployNode(chainId, nodeType, nodeAddress)`: Initializes and deploys a Docker node of the specified type.
-- `initAndDeployNetwork(chainId)`: Initializes and deploys a Docker network for the specified chain ID.
-- `removeNodeContainer(chainId, nodeAddress)`: Removes a Docker container for a specified node.
-- `removeNetwork(chainId)`: Removes all containers associated with a specified Docker network.
+- `pethPoa.docker.initAndDeployNode(chainId, nodeType, nodeAddress)`: Initializes and deploys a Docker node of the specified type.
+- `pethPoa.docker.initAndDeployNetwork(chainId)`: Initializes and deploys a Docker network for the specified chain ID.
+- `pethPoa.docker.removeNodeContainer(chainId, nodeAddress)`: Removes a Docker container for a specified node.
+- `pethPoa.docker.removeNetwork(chainId)`: Removes all containers associated with a specified Docker network.
 
 ## Future Plans
 
