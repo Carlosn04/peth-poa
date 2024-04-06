@@ -18,6 +18,8 @@ Before deploying networks using this package, ensure that you have the following
 This package comes with predefined wallets intended solely for local development and testing purposes. These wallets are not secure for user or production use. While the package provides functionality to create new accounts and node accounts, it's essential to handle such operations with caution. Any use of these features is at the user's own risk.
 
 ## Quick Start
+Install the package using npm:
+`npm i ethereum-network-automation`
 
 Below we can see a simple example of how to deploy networks using Docker and Geth.
 
