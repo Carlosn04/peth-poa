@@ -93,7 +93,7 @@ class NodeManager {
         const enrPath = path.join(config.localStoragePath, `networks/${chainId}/enr.txt`);
         try {
             const enr = nodeType === 'bootstrap' ? '' : await this.storageMiddleware.readFile(enrPath);
-            const { ip, port } = await this.networkManager.addNode(chainId.toString(), nodeType, nodeAddress);
+            const { ip, port, rpcPort } = await this.networkManager.addNode(chainId.toString(), nodeType, nodeAddress);
 
             if (!port || !ip) {
                 console.error(`Failed to allocate port/ip for node ${nodeAddress} in network ${chainId}.`);
@@ -108,7 +108,7 @@ class NodeManager {
                     await this.memberManager.startMemberNode(chainId, nodeAddress, port, enr);
                     break;
                 case 'rpc':
-                    await this.rpcManager.startRpcNode(chainId, nodeAddress, enr, port, ip);
+                    await this.rpcManager.startRpcNode(chainId, nodeAddress, enr, port, rpcPort, ip);
                     break;
                 case 'bootstrap':
                     // Ensure externalIp and subnet are provided for bootstrap nodes

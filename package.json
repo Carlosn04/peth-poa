@@ -1,11 +1,11 @@
 {
   "name": "ethereum-network-automation",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "Ethereum Network Automation is a toolkit for deploying and managing Ethereum PoA networks, offering authentic EVM environments and straightforward interaction with Geth and Docker",
   "main": "dist/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/index.js"
+    "reset-networks": "node dist/storage/ResetNetworks.js"
   },
   "keywords": [
     "ethereum",

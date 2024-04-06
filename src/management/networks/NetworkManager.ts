@@ -2,6 +2,7 @@ import path from 'path';
 import { config } from '../../config';
 import PortManager from './PortManager';
 import IPManager from './IpManager';
+import RpcPortManager from './RpcPortManager';
 import { IStorageMiddleware } from '../../interfaces/IStorageMiddleware';
 
 import { exec } from 'child_process'
@@ -12,6 +13,7 @@ interface NetworkNode {
   address: string;
   role: string;
   port: number | undefined;
+  rpcPort: number | undefined;
   ip: string | undefined
 }
 
@@ -24,6 +26,7 @@ interface NetworkConfig {
 interface NodeAllocationResult {
   ip: string | undefined;
   port: number | undefined;
+  rpcPort: number | undefined;
 }
 
 interface ActiveGethNode {
@@ -121,11 +124,13 @@ export default class NetworkManager {
   private storageMiddleware: IStorageMiddleware;
   private portManager: PortManager;
   private ipManager: IPManager;
+  private rpcPortManager: RpcPortManager;
 
   constructor(storageMiddleware: IStorageMiddleware) {
     this.storageMiddleware = storageMiddleware;
     this.portManager = PortManager.getInstance(storageMiddleware);
     this.ipManager = IPManager.getInstance(storageMiddleware)
+    this.rpcPortManager = RpcPortManager.getInstance(storageMiddleware)
   }
 
   async collectAndCleanupNetworkConfigs(): Promise<{
@@ -218,18 +223,19 @@ export default class NetworkManager {
     await this.ensureNetworkConfigExists(chainId);
     let networkConfig = await this.loadNetworkConfig(Number(chainId));
 
-    // Allocate a port and ip
+    // Allocate port, rpcPort and ip
     const port = await this.portManager.allocatePort(chainId);
     const ip = await this.ipManager.allocateIP(chainId)
+    const rpcPort = await this.rpcPortManager.allocateRpcPort(chainId)
     if (port === null || ip === null) {
       console.error(`Failed to allocate port/ip for node ${address} in network ${chainId}`);
-      return { ip: undefined, port: undefined };
+      return { ip: undefined, port: undefined,  rpcPort: undefined };
     }
 
-    networkConfig.nodes.push({ address, role, port, ip });
+    networkConfig.nodes.push({ address, role, port, rpcPort, ip });
     await this.saveNetworkConfig(chainId, networkConfig);
 
-    return { ip, port }
+    return { ip, port, rpcPort }
   }
 
   // Loads the network configuration for a given chainId

@@ -42,14 +42,14 @@ class GenesisCreator {
     return prefix + middle + suffix;
   }
 
-  private ethToGwei(ethAmount: string): string {
-    const ethInWei = BigInt(Math.floor(parseFloat(ethAmount) * 1e9)).toString();
+  private ethToWei(ethAmount: string): string {
+    const ethInWei = BigInt(Math.floor(parseFloat(ethAmount) * 1e18)).toString();
     return ethInWei;
   }
 
   private composeGenesisData(): object {
     const allocInGwei = Object.entries(this.genesisConfig.alloc).reduce((acc, [address, { balance }]) => {
-      acc[address] = { balance: this.ethToGwei(balance) };
+      acc[address] = { balance: this.ethToWei(balance) };
       return acc;
     }, {} as Record<string, { balance: string }>);
 

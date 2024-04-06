@@ -15,6 +15,7 @@ interface IConfig {
     rpcPath: string;
     bootstrapPath: string;
     portsBasePath: string;
+    rpcPortsBasePath: string;
     ipsBasePath: string;
     networksBasePath: string;
     gethCommandArgs: IGethCommandArgs;
@@ -87,6 +88,7 @@ export const config: IConfig = {
     rpcPath: path.resolve(basePath, 'local-storage/nodes/rpc'),
     bootstrapPath: path.resolve(basePath, 'local-storage/nodes/bootstrap'),
     portsBasePath: path.resolve(basePath, 'local-storage/networks'),
+    rpcPortsBasePath: path.resolve(basePath, 'local-storage/networks'),
     ipsBasePath: path.resolve(basePath, 'local-storage/networks'),
     networksBasePath: path.resolve(basePath, 'local-storage/networks'),
     gethCommandArgs: gethCommandArgs,

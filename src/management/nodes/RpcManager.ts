@@ -10,8 +10,8 @@ export default class RpcManager {
     this.storageMiddleware = storageMiddleware;
   }
 
-  public async startRpcNode(chainId: number, address: string, enr: string, port: number | null | undefined, ip: string | null) {
-    if (!enr || !port) {
+  public async startRpcNode(chainId: number, address: string, enr: string, port: number | null | undefined, rpcPort: number | undefined, ip: string | null) {
+    if (!enr || !port || !rpcPort) {
       const error = !enr ? "ENR not available. Cannot start signer node." : "Port not provided! Cannot start signer node."
       console.error(error);
       return;
@@ -25,7 +25,7 @@ export default class RpcManager {
       port: port.toString(),
       chainId: chainId.toString(),
       enr,
-      httpPort: port.toString(),
+      httpPort: rpcPort.toString(),
       httpIp: '0.0.0.0',
       ipcPath
     })
