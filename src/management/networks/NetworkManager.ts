@@ -128,60 +128,6 @@ export default class NetworkManager {
     this.ipManager = IPManager.getInstance(storageMiddleware)
   }
 
-  // async collectAndCleanupNetworkConfigs(): Promise<{ availableResourcesByChainId: Record<string, { availableIPs: Set<string>; availablePorts: Set<string> }> }> {
-  //   const availableResourcesByChainId: Record<string, { availableIPs: Set<string>; availablePorts: Set<string> }> = {};
-  //   const usedIPs = new Set<string>();
-  //   const usedPorts = new Set<string>();
-
-  //   const availableIPs = new Set<string>();
-  //   const availablePorts = new Set<string>();
-
-  //   const activeGethNodes = await getActiveLocalGethNodes();
-  //   const activeDockerNetworks = await getActiveDockerNetworks();
-
-  //   // Create sets for quick lookup
-  //   const activeGethPorts = new Set(activeGethNodes.map(node => node.port));
-  //   const dockerIPsToPorts = new Map<string, string>(); // Map Docker IPs to their ports based on network configs
-
-  //   activeDockerNetworks
-  //     .filter(network => network.Name.includes('eth'))
-  //     .forEach(network => {
-  //       Object.values(network.Containers ?? {}).forEach(container => {
-  //         const containerIP = container.IPv4Address.split('/')[0]; // Assuming IPv4Address is in format "ip/subnet"
-  //         dockerIPsToPorts.set(containerIP, ''); // Initialize map; we'll associate ports later
-  //       });
-  //     });
-
-  //   const allNetworkConfigs = await this.loadAllNetworksConfig();
-  //   allNetworkConfigs.forEach(async ({ config }) => {
-  //     // const updatedConfig = { ...config, nodes: updatedNodes };
-  //     let updatedNodes: NetworkNode[] = []
-  //     let availableNodes: NetworkNode[] = []
-  //     //     await this.storageMiddleware.writeFile(this.getNetworkConfigPath(chainId.toString()), JSON.stringify(updatedConfig, null, 2));
-      
-  //     config.nodes.forEach(node => {
-  //       if (node.port && node.ip && (activeGethPorts.has(node.port.toString()) || dockerIPsToPorts.has(node.ip))) {
-  //         updatedNodes.push(node); // Node is active
-  //         usedIPs.add(node.ip);
-  //         usedPorts.add(node.port.toString());
-  //       } else if (node.port && node.ip) {
-  //         // Node is inactive, add its IP and port to available resources
-  //         availableNodes.push(node);
-  //         availableIPs.add(node.ip);
-  //         availablePorts.add(node.port.toString());
-  //       }
-       
-  //     });
-      
-  //     const updatedConfig = { ...config, nodes: updatedNodes };
-  //     //await this.storageMiddleware.writeFile(this.getNetworkConfigPath(config.chainId.toString()), JSON.stringify(updatedConfig, null, 2));
-  //     const availableConfig = { ...config, nodes: availableNodes }
-  //     //availableResourcesByChainId[availableConfig.chainId] = { availableIPs: availableConfig.chainId, availablePorts: new Set() };
-  //     console.log(availableConfig)
-  //   });
-  //   return { availableResourcesByChainId }
-  // }
-
   async collectAndCleanupNetworkConfigs(): Promise<{
     availableResourcesByChainId: Record<string, {
       availableIPs: string[];

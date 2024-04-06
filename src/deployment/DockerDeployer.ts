@@ -103,6 +103,8 @@ class DockerDeployer {
     await this.initAndDeployNode(chainId, 'signer', addresses.signerNodeAddress)
     await this.delay(500)
     await this.initAndDeployNode(chainId, 'rpc', addresses.rpcNodeAddress)
+    await this.delay(500)
+    await this.initAndDeployNode(chainId, 'member', addresses.rpcNodeAddress)
   }
 
   private delay(ms: number) {
