@@ -226,7 +226,7 @@ export default class NetworkManager {
     // Allocate port, rpcPort and ip
     const port = await this.portManager.allocatePort(chainId);
     const ip = await this.ipManager.allocateIP(chainId)
-    const rpcPort = await this.rpcPortManager.allocateRpcPort(chainId)
+    const rpcPort = role === 'rpc' ? await this.rpcPortManager.allocateRpcPort(chainId) : undefined
     if (port === null || ip === null) {
       console.error(`Failed to allocate port/ip for node ${address} in network ${chainId}`);
       return { ip: undefined, port: undefined,  rpcPort: undefined };
@@ -251,6 +251,22 @@ export default class NetworkManager {
     return networkConfig
   }
 
+  public async loadRpcPort(chainId: number): Promise<string> {
+    await this.updateGlobalAllocations();
+    const networkConfig = await this.loadNetworkConfig(chainId);
+    const rpcNode = networkConfig.nodes.find(node => node.rpcPort); // Assuming you want the first node with an RPC port.
+
+    if (!rpcNode || !rpcNode.rpcPort) {
+      throw new Error('RPC node or port not found');
+    }
+
+    const rpcUrl = `
+    http://localhost:${rpcNode.rpcPort}
+    `;
+    return rpcUrl;
+  }
+  
+
   public async loadAllNetworksConfig(): Promise<Array<{ chainId: number, config: NetworkConfig }>> {
     const networksDir = config.networksBasePath;
     const networkConfigs = [];
@@ -266,7 +282,7 @@ export default class NetworkManager {
               const config = await this.loadNetworkConfig(chainId);
               networkConfigs.push({ chainId, config });
             } catch (error) {
-              console.error(`Failed to load network config for chainId ${chainId}:`, error);
+              //console.error(`Failed to load network config for chainId ${chainId}:`, error);
             }
           }
         }

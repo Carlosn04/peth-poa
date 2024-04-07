@@ -1,5 +1,6 @@
 import util from 'util';
 import * as path from 'path';
+import chalk from 'chalk';
 import { promises as fs } from 'fs';
 import { exec } from 'child_process';
 import { config } from '../config';
@@ -104,8 +105,10 @@ class DockerDeployer {
     await this.delay(500)
     await this.initAndDeployNode(chainId, 'rpc', addresses.rpcNodeAddress)
     await this.delay(500)
-    await this.initAndDeployNode(chainId, 'member', addresses.rpcNodeAddress)
-    this.log('Docker Network succesfully deployed!', 0)
+    await this.initAndDeployNode(chainId, 'member', addresses.memberNodeAddress)
+    this.log(chalk.blue('Docker Network succesfully deployed!'), 0)
+    const rpcUrl = await this.networkManager.loadRpcPort(chainId)
+    this.log(chalk.green(rpcUrl), 0)
   }
 
   private delay(ms: number) {
@@ -118,7 +121,7 @@ class DockerDeployer {
       await this.prepareDirectories(nodeDirectories);
       await this.copyNodeData(nodeDirectories.absoluteNodeDir, nodeDirectories.absoluteNetworkNodeDir);
 
-      const { ip, port } = await this.allocateNodePort(chainId, nodeType, nodeAddress);
+      const { ip, port, rpcPort } = await this.allocateNodePort(chainId, nodeType, nodeAddress);
       if (!port || !ip ) return; // Port allocation failed, already logged
 
       const networkConfig = await this.networkManager.loadNetworkConfig(chainId);
@@ -126,7 +129,7 @@ class DockerDeployer {
       const enr = await this.waitForEnrAndRead(nodeDirectories.absoluteEnrPath, nodeType);
       if (!enr) return // Enr allocation failed, already logged
 
-      const dockerComposeContent = this.generateDockerCompose(chainId, nodeType, nodeAddress, nodeDirectories, ip, port, enr, networkConfig);
+      const dockerComposeContent = this.generateDockerCompose(chainId, nodeType, nodeAddress, nodeDirectories, ip, port, rpcPort, enr, networkConfig);
       await this.writeDockerComposeFile(nodeDirectories.absoluteNetworkNodeDir, dockerComposeContent);
       await this.handleDockerNetwork(chainId, networkConfig.subnet);
       await this.startDockerCompose(chainId, nodeDirectories.absoluteNetworkNodeDir);
@@ -161,12 +164,12 @@ class DockerDeployer {
     await this.storageMiddleware.copyDirectory(sourceDir, targetDir);
   }
 
-  private async allocateNodePort(chainId: number, nodeType: string, nodeAddress: string): Promise<{ ip: string, port: number }> {
-    const { ip, port } = await this.networkManager.addNode(chainId.toString(), nodeType, nodeAddress);
+  private async allocateNodePort(chainId: number, nodeType: string, nodeAddress: string): Promise<{ ip: string, port: number, rpcPort:  number | undefined}> {
+    const { ip, port, rpcPort } = await this.networkManager.addNode(chainId.toString(), nodeType, nodeAddress);
     if (!port || !ip) {
       throw new Error(`Failed to allocate port/ip for node ${nodeAddress} in network ${chainId}.`);
     }
-    return { ip, port };
+    return { ip, port, rpcPort };
   }  
 
   private async waitForEnrAndRead(enrPath: string, nodeType: string, timeoutMs: number = 30000): Promise<string | null> {
@@ -193,12 +196,13 @@ class DockerDeployer {
     return `${nodeType}-${chainId}-${nodeAddress}`;
   }  
 
-  private generateDockerCompose(chainId: number, nodeType: string, nodeAddress: string, nodeDirectories: { absoluteNetworkNodeDir: string, absoluteGenesisPath: string }, ip: string, port: number, enr: string, networkConfig: any): string {
+  private generateDockerCompose(chainId: number, nodeType: string, nodeAddress: string, nodeDirectories: { absoluteNetworkNodeDir: string, absoluteGenesisPath: string }, ip: string, port: number, rpcPort: number | undefined, enr: string, networkConfig: any): string {
   const uniqueIdentity = this.getUniqueIdentity(chainId, nodeType, nodeAddress);
-  const httpRpcPort = '8549'; // Default HTTP RPC port, adjust if needed
-  const gethNodeCommand = this.getGethNodeCommand(chainId, nodeType, nodeAddress, port, enr, ip, networkConfig.subnet);
+  const httpRpcPort = rpcPort
+  const gethNodeCommand = this.getGethNodeCommand(chainId, nodeType, nodeAddress, port, rpcPort, enr, ip, networkConfig.subnet);
 
-  const portsSection = nodeType === 'rpc' ? `ports:\n      - "${port}:${httpRpcPort}"` : '';
+  //const portsSection = nodeType === 'rpc' ? `ports:\n      - "${port}:${httpRpcPort}"` : '';
+  const portsSection = nodeType === 'rpc' ? `ports:\n      - "${httpRpcPort}:${httpRpcPort}"` : '';
 
   return `
 version: '3.8'
@@ -224,8 +228,8 @@ networks:
 `;
   }
 
-  private getGethNodeCommand(chainId: number, nodeType: string, nodeAddress: string, port: number, enr: string, ip: string, subnet: string): string {
-    const httpRpcPort = '8549'; // Default HTTP RPC port
+  private getGethNodeCommand(chainId: number, nodeType: string, nodeAddress: string, port: number, rpcPort: number | undefined, enr: string, ip: string, subnet: string): string {
+    const httpRpcPort = rpcPort
     const networkflags = `--nat "extip:${ip}" --netrestrict ${subnet}` // exclusive for Docker deployment
 
     // Retrieve the base command arguments for the node type from your config mapping
