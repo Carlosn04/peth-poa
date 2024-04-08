@@ -29,15 +29,12 @@ const gethCommandArgs: IGethCommandArgs = {
         '--networkid', params.chainId,
         '--ipcpath', params.ipcPath,
         '--port', params.port,
-        // '--authrpc.port', params.port,
         '--discovery.v5', // needed for enr
         '--verbosity', verbosity,
     ],
     signer: (params) => [
         '--datadir', params.networkNodeDir,
         '--port', params.port,
-        // '--authrpc.addr', params.ip,
-        // '--authrpc.port', params.authRpcPort,
         '--bootnodes', params.enr,
         '--networkid', params.chainId,
         '--unlock', params.address,
@@ -47,13 +44,11 @@ const gethCommandArgs: IGethCommandArgs = {
         '--ipcpath', params.ipcPath,
         '--discovery.v5',
         '--verbosity', verbosity,
-        // Additional custom params as needed
     ],
     member: (params) => [
         '--datadir', params.networkNodeDir,
         '--networkid', params.chainId,
         '--port', params.port,
-        // '--authrpc.port', params.port,
         '--bootnodes', params.enr,
         '--networkid', params.chainId,
         '--unlock', params.address,
@@ -68,13 +63,11 @@ const gethCommandArgs: IGethCommandArgs = {
         '--datadir', params.networkNodeDir,
         '--networkid', params.chainId,
         '--port', params.port,
-        //'--authrpc.port', params.port,
         '--bootnodes', params.enr,
         '--ipcpath', params.ipcPath,
         '--discovery.v5',
         '--http', '--http.addr', params.httpIp, '--http.port', params.httpPort, '--http.corsdomain=*',// '"*"',
         '--verbosity', verbosity,
-        // Additional args for RPC nodes
     ],
 };
 

@@ -108,15 +108,10 @@ class NodeManager {
                     await this.memberManager.startMemberNode(chainId, nodeAddress, port, enr);
                     break;
                 case 'rpc':
-                    await this.rpcManager.startRpcNode(chainId, nodeAddress, enr, port, rpcPort, ip);
+                    await this.rpcManager.startRpcNode(chainId, nodeAddress, enr, port, rpcPort);
                     break;
                 case 'bootstrap':
-                    // Ensure externalIp and subnet are provided for bootstrap nodes
-                    // if (!actualExternalIp || !actualSubnet) {
-                    //     console.error('Missing externalIp or subnet for bootstrap node start.');
-                    //     return;
-                    // }
-                    await this.bootstrapManager.startBootstrapNode(chainId, nodeAddress, port, actualExternalIp, actualSubnet);
+                    await this.bootstrapManager.startBootstrapNode(chainId, nodeAddress, port, rpcPort);
                     break;
                 default:
                     console.error(`Node type ${nodeType} is not supported.`);

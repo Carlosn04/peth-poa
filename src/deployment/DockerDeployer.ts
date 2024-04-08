@@ -84,6 +84,49 @@ class DockerDeployer {
   }
 
   async initAndDeployNetwork(chainId: number) {
+    function drawContainer(label: string, status: string, color: (text: string) => string) {
+      // Drawing the top of the container
+      console.log(color('+-----------------+'));
+      console.log(color(`|   ${label.padEnd(13)}|`));
+      console.log(color('|                 |'));
+      
+      // Drawing the deployment status inside the container
+      if (status === 'Deployed') {
+        console.log(color(`|   [${status}]   |`));
+      } else {
+        console.log(color('|                 |'));
+      }
+      
+      // Drawing the bottom of the container
+      console.log(color('+-----------------+\n'));
+    }
+    
+    console.log(chalk.blue(`
+                    ##         .
+              ## ## ##        ==
+           ## ## ## ## ##    ===
+       /"""""""""""""""""\___/ ===
+  ~~~ {~~ ~~~~ ~~~ ~~~~ ~~~ ~ /  ===- ~~~
+       \\______ o           __/
+         \\    \\         __/
+          \\____\\_______/
+  `));
+    console.log(chalk.blue('╔══════════════════════════════════════════════════╗'));
+    console.log(chalk.blue('║           Docker Network Deployment              ║'));
+    console.log(chalk.blue('╚══════════════════════════════════════════════════╝'));
+
+    await this.delay(500)
+    console.log(chalk.gray('-- NODES -------------------------------------------\n'));
+
+    const nodeTypes = ['Bootstrap Node', 'Signer Node', 'RPC Node', 'Member Node'];
+    const colors = {
+      bootstrap: chalk.bgCyan,
+      signer: chalk.bgGreen,
+      rpc: chalk.bgMagenta,
+      member: chalk.bgYellow,
+    };
+
+
     // Default addresses within the package
     const addresses = {
       bootstrapNodeAddress: "0xCeB5ca48b5DE1839379FAEDD0572F7D59B279749",
@@ -94,21 +137,71 @@ class DockerDeployer {
 
     const alloc = {
       [addresses.signerNodeAddress]: { balance: '100' }, // This value is converted to gwei
-      [addresses.memberNodeAddress]: { balance: '100' }, //
+      [addresses.rpcNodeAddress]: { balance: '100' },
+      [addresses.bootstrapNodeAddress]: { balance: '100' },
+      [addresses.memberNodeAddress]: { balance: '100' },
     };
     const signers = [addresses.signerNodeAddress];
 
     await GenesisFactory.createGenesis(chainId, signers, alloc)
-    await this.initAndDeployNode(chainId, 'bootstrap', addresses.bootstrapNodeAddress)
+
+    // Deploy Bootstrap Node
+    await this.initAndDeployNode(chainId, 'bootstrap', addresses.bootstrapNodeAddress);
+    console.log(`${' Bootstrap Deployed | '}${chalk.bgCyan(' '.repeat(25 + 5))}`);
+    console.log('')
     await this.delay(500)
-    await this.initAndDeployNode(chainId, 'signer', addresses.signerNodeAddress)
+    // Deploy Signer Node
+    await this.initAndDeployNode(chainId, 'signer', addresses.signerNodeAddress);
+    console.log(`${' Signer Deployed | '}${chalk.bgGreen(' '.repeat(27 + 6))}`);
+    console.log('')
     await this.delay(500)
-    await this.initAndDeployNode(chainId, 'rpc', addresses.rpcNodeAddress)
+    // Deploy RPC Node
+    await this.initAndDeployNode(chainId, 'rpc', addresses.rpcNodeAddress);
+    console.log(`${' RPC Deployed | '}${chalk.bgMagenta(' '.repeat(30 + 6))}`);
+    console.log('')
     await this.delay(500)
-    await this.initAndDeployNode(chainId, 'member', addresses.memberNodeAddress)
-    this.log(chalk.blue('Docker Network succesfully deployed!'), 0)
+    // Deploy Member Node
+    await this.initAndDeployNode(chainId, 'member', addresses.memberNodeAddress);
+    console.log(`${' Member Node | '}${chalk.bgYellow(' '.repeat(26 + 11))}`);
+    console.log('')
+    await this.delay(500)
+
+    console.log(chalk.cyan('╔══════════════════════════════════════════════════╗'));
+    console.log(chalk.cyan('║       Docker Network Successfully Deployed!      ║'));
+    console.log(chalk.cyan('╚══════════════════════════════════════════════════╝'));
+
+    await this.delay(1000)
+
+    const memberLog = `
+${chalk.yellow('═══════════════| Member Node Keys |════════════════')}
+${chalk.yellow('Public Key')}
+  ${addresses.memberNodeAddress}
+${chalk.yellow('Private Key')}
+  0xa983991c76c5f6747abb5b6b6c5ecf488c7cf0f09ee9a283224c89a1a0455964
+      `;
+    console.log(memberLog);
+
+    await this.delay(1000)
+
     const rpcUrl = await this.networkManager.loadRpcPort(chainId)
-    this.log(chalk.green(rpcUrl), 0)
+    console.log(chalk.green(`═══| RPC URL\n═══| ${rpcUrl}
+    `));
+
+    await this.delay(1000)
+    const hardhatConfigSnippet = `${chalk.magenta('══════| Hardhat Configuration Snippet |══════')}
+${chalk.magenta('Add the following code to your Hardhat config\nto connect to this network using the member node')}
+
+    module.exports = {
+      solidity: "0.8.4",
+      networks: {
+        custom: {
+          url: "${rpcUrl}",
+          accounts: ["0xa983991c76c5f6747abb5b6b6c5ecf488c7cf0f09ee9a283224c89a1a0455964"]
+        }
+      }
+    };
+    `;
+    console.log(chalk.grey(hardhatConfigSnippet));
   }
 
   private delay(ms: number) {

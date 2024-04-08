@@ -254,15 +254,13 @@ export default class NetworkManager {
   public async loadRpcPort(chainId: number): Promise<string> {
     await this.updateGlobalAllocations();
     const networkConfig = await this.loadNetworkConfig(chainId);
-    const rpcNode = networkConfig.nodes.find(node => node.rpcPort); // Assuming you want the first node with an RPC port.
+    const rpcNode = networkConfig.nodes.find(node => node.rpcPort); // Assuming the first node is an RPC port.
 
     if (!rpcNode || !rpcNode.rpcPort) {
       throw new Error('RPC node or port not found');
     }
 
-    const rpcUrl = `
-    http://localhost:${rpcNode.rpcPort}
-    `;
+    const rpcUrl = `http://localhost:${rpcNode.rpcPort}`;
     return rpcUrl;
   }
   

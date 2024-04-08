@@ -113,7 +113,7 @@ export default class LocalGethDeployer {
 
         const alloc = {
             [addresses.signerNodeAddress]: { balance: '100' }, // This value is converted to gwei
-            [addresses.memberNodeAddress]: { balance: '100' }, //
+            [addresses.rpcNodeAddress]: { balance: '100' }, //
         };
         const signers = [addresses.signerNodeAddress];
 

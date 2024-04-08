@@ -15,7 +15,12 @@ export default class BootstrapManager {
         return this._enr;
     }
 
-    async startBootstrapNode(chainId: number, address: string, port: number, externalIp: string, subnet: string): Promise<void> {
+    async startBootstrapNode(chainId: number, address: string, port: number, rpcPort: number | undefined): Promise<void> {
+        if (!port) {
+            const error = !port ? "PORT not available. Cannot start bootstrap node." : "Port not provided! Cannot start bootstrap node."
+            console.error(error);
+            return;
+          }
         const networkNodeDir = path.join(config.localStoragePath, `networks/${chainId}/bootstrap/${address}`);
         const passwordFilePath = path.join(networkNodeDir, 'password.txt');
         const ipcPath = path.join(config.ipcNodePath, `${chainId}/${address}`, 'geth.ipc');
@@ -36,7 +41,7 @@ export default class BootstrapManager {
         });
 
         const extraFlags: string[] = [
-            '--authrpc.port', port?.toString()
+            '--authrpc.port', port.toString()
         ]
         const fullCommand = [...bootstrapArgs, ...extraFlags]
 

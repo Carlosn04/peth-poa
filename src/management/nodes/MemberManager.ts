@@ -12,7 +12,7 @@ export default class MemberManager {
 
   public async startMemberNode(chainId: number, address: string, port: number | null | undefined, enr: string) {
     if (!enr || !port) {
-      const error = !enr ? "ENR not available. Cannot start signer node." : "Port not provided! Cannot start signer node."
+      const error = !enr ? "ENR not available. Cannot start member node." : "Port not provided! Cannot start member node."
       console.error(error);
       return;
     }
