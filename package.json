@@ -1,6 +1,6 @@
 {
   "name": "ethereum-network-automation",
-  "version": "1.2.10",
+  "version": "1.2.11",
   "description": "Ethereum Network Automation is a toolkit for deploying and managing Ethereum PoA networks, offering authentic EVM environments and straightforward interaction with Geth and Docker",
   "main": "dist/main.js",
   "scripts": {
@@ -17,10 +17,24 @@
     "EVM",
     "consensus",
     "PoA",
+    "Proof of Authority",
     "deployment",
     "geth",
-    "docker"
-  ],
+    "docker",
+    "node management",
+    "Ethereum network",
+    "DApp development",
+    "decentralized applications",
+    "blockchain automation",
+    "blockchain development",
+    "Ethereum Docker",
+    "Ethereum deployment",
+    "private blockchain",
+    "testnet",
+    "development environment",
+    "Ethereum testing",
+    "Ethereum development"
+  ],  
   "author": "Carlosn04",
   "license": "ISC",
   "devDependencies": {
