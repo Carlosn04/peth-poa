@@ -20,4 +20,3 @@ function deleteDirectory(directoryPath: string): void {
 
 // Reset networks by deleting the networksBasePath directory
 deleteDirectory(config.networksBasePath);
-console.log('Networks have been reset.');

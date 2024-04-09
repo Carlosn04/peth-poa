@@ -1,6 +1,6 @@
 {
   "name": "ethereum-network-automation",
-  "version": "1.2.0",
+  "version": "1.2.5",
   "description": "Ethereum Network Automation is a toolkit for deploying and managing Ethereum PoA networks, offering authentic EVM environments and straightforward interaction with Geth and Docker",
   "main": "dist/main.js",
   "scripts": {
@@ -26,13 +26,11 @@
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.11.24",
-    "@types/yargs": "^17.0.32",
     "typescript": "^5.3.3"
   },
   "dependencies": {
     "chalk": "^4.1.0",
-    "fs-extra": "^11.2.0",
-    "yargs": "^17.7.2"
+    "fs-extra": "^11.2.0"
   },
   "repository": {
     "type": "git",

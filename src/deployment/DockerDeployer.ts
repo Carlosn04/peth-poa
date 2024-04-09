@@ -164,6 +164,7 @@ class DockerDeployer {
     await this.initAndDeployNode(chainId, 'member', addresses.memberNodeAddress);
     console.log(`${' Member Node | '}${chalk.bgYellow(' '.repeat(26 + 11))}`);
     console.log('')
+    console.log(chalk.gray('------------------------------------------- NODES --\n'));
     await this.delay(500)
 
     console.log(chalk.cyan('╔══════════════════════════════════════════════════╗'));
@@ -374,25 +375,64 @@ networks:
     }
   }
 
+  private async findNetworkIdByName(networkName: string): Promise<string | null> {
+    const { stdout } = await execAsync(`docker network ls --filter name=^${networkName}$ --format "{{.ID}}"`);
+    return stdout.trim() || null;
+  }
+  
+  private async isSubnetMismatch(networkId: string, subnet: string): Promise<boolean> {
+    const { stdout: inspectOut } = await execAsync(`docker network inspect ${networkId} --format '{{json .IPAM.Config}}'`);
+    let ipamConfigs;
+    try {
+      ipamConfigs = JSON.parse(inspectOut);
+    } catch (error) {
+      console.error(`Failed to parse IPAM config for network ID ${networkId}:`, error);
+      return true; // Assume mismatch if parsing fails
+    }
+    return !ipamConfigs.some((config: { Subnet: string }) => config.Subnet === subnet);
+  }  
+
   private async handleDockerNetwork(chainId: number, subnet: string): Promise<void> {
     const networkName = `eth${chainId}`;
-    const existingNetworksCommandResult = await execAsync(`docker network ls --filter name=^${networkName}$ --format "{{.Name}}"`);
-    const existingNetwork = existingNetworksCommandResult.stdout.trim();
-
+  
+    // Check for an existing network with the exact name
+    const existingNetworkIdByName = await this.findNetworkIdByName(networkName);
+  
+    // Find any network that overlaps with the desired subnet, including the one with the exact name but wrong subnet
     const overlappingNetworkId = await this.findOverlappingNetwork(subnet);
+  
+    // Determine if the existing network by name and the overlapping network by subnet are the same
+    const isSameNetwork = existingNetworkIdByName && overlappingNetworkId && existingNetworkIdByName === overlappingNetworkId;
 
-    if (!existingNetwork && overlappingNetworkId) {
-      this.log(`Removing overlapping Docker network with ID: ${overlappingNetworkId}`, 2);
-      await execAsync(`docker network rm ${overlappingNetworkId}`); // Remove the overlapping network
-      this.log(`Creating Docker network: ${networkName} with subnet: ${subnet}`, 2);
-      await execAsync(`docker network create --driver bridge --subnet=${subnet} ${networkName}`); // Create the new network
-    } else if (!existingNetwork) {
-      this.log(`Creating Docker network: ${networkName} with subnet: ${subnet}`, 2);
-      await execAsync(`docker network create --driver bridge --subnet=${subnet} ${networkName}`);
-    } else {
-      this.log(`Docker network ${networkName} already exists.`, 2);
+    // If there's an existing network by name but it's not the same as the overlapping network, remove it
+    if (existingNetworkIdByName && !isSameNetwork) {
+        this.log(`Removing existing Docker network by name: ${networkName}`, 2);
+        await execAsync(`docker network rm ${existingNetworkIdByName}`);
     }
-  }  
+
+    // If there's an overlapping network by subnet and it's not the same as the existing network by name, remove it
+    if (overlappingNetworkId && !isSameNetwork) {
+        this.log(`Removing overlapping Docker network with ID: ${overlappingNetworkId}`, 2);
+        await execAsync(`docker network rm ${overlappingNetworkId}`);
+    }
+
+    // After ensuring no conflicts, create the new network if no existing network matched the criteria
+    if (!existingNetworkIdByName || !isSameNetwork) {
+        this.log(`Creating Docker network: ${networkName} with subnet: ${subnet}`, 2);
+        await execAsync(`docker network create --driver bridge --subnet=${subnet} ${networkName}`);
+    } else {
+        this.log(`Docker network ${networkName} already exists with the correct subnet, no action needed.`, 2);
+    }
+  }
+  
+  private async removeNetworkByName(networkName: string): Promise<void> {
+    // Using `--format` to directly extract the ID might streamline operations
+    const commandResult = await execAsync(`docker network ls --filter name=^${networkName}$ --format "{{.ID}}"`);
+    const networkId = commandResult.stdout.trim();
+    if (networkId) {
+      await execAsync(`docker network rm ${networkId}`);
+    }
+  }     
 
   private async startDockerCompose(chainId: number, networkNodeDir: string): Promise<void> {
     const composeCommand = `docker-compose -p eth${chainId} -f ${path.join(networkNodeDir, 'docker-compose.yml')} up -d`;
