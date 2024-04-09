@@ -38,7 +38,7 @@ Further, due to potential complications arising from how ports are managed and a
 Install the package using npm: 
 `npm i ethereum-network-automation`
 
-Examples of how to deploy networks using cli or built-in methods
+Examples of how to deploy networks using cli or built-in methods. Make sure Docker daemon is running.
 
 #### CLI 
 ```
