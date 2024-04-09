@@ -162,7 +162,7 @@ class DockerDeployer {
     await this.delay(500)
     // Deploy Member Node
     await this.initAndDeployNode(chainId, 'member', addresses.memberNodeAddress);
-    console.log(`${' Member Node | '}${chalk.bgYellow(' '.repeat(26 + 11))}`);
+    console.log(`${' Member Deployed | '}${chalk.bgYellow(' '.repeat(22 + 11))}`);
     console.log('')
     console.log(chalk.gray('------------------------------------------- NODES --\n'));
     await this.delay(500)
