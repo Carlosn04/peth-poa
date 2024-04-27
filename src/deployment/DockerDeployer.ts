@@ -83,24 +83,7 @@ class DockerDeployer {
     }
   }
 
-  async initAndDeployNetwork(chainId: number) {
-    function drawContainer(label: string, status: string, color: (text: string) => string) {
-      // Drawing the top of the container
-      console.log(color('+-----------------+'));
-      console.log(color(`|   ${label.padEnd(13)}|`));
-      console.log(color('|                 |'));
-      
-      // Drawing the deployment status inside the container
-      if (status === 'Deployed') {
-        console.log(color(`|   [${status}]   |`));
-      } else {
-        console.log(color('|                 |'));
-      }
-      
-      // Drawing the bottom of the container
-      console.log(color('+-----------------+\n'));
-    }
-    
+  async initAndDeployNetwork(chainId: number) {    
     console.log(chalk.blue(`
                     ##         .
               ## ## ##        ==

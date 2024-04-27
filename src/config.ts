@@ -66,7 +66,7 @@ const gethCommandArgs: IGethCommandArgs = {
         '--bootnodes', params.enr,
         '--ipcpath', params.ipcPath,
         '--discovery.v5',
-        '--http', '--http.addr', params.httpIp, '--http.port', params.httpPort, '--http.corsdomain=*',// '"*"',
+        '--http', '--http.addr', params.httpIp, '--http.port', params.httpPort, '--http.corsdomain=*', '--http.vhosts=*',
         '--verbosity', verbosity,
     ],
 };
