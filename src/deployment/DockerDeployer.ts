@@ -286,7 +286,7 @@ version: '3.8'
 services:
   ${uniqueIdentity}:
     container_name: ${uniqueIdentity}
-    image: ethereum/client-go:stable
+    image: ethereum/client-go:v1.13.15
     entrypoint: /bin/sh -c
     command: >
      "geth --datadir /root/.ethereum init /root/genesis.json && geth ${gethNodeCommand}"
